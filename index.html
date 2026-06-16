@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tareas Pendientes</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;background:#F5F5F3;color:#1a1a18;min-height:100vh}
+.screen{display:none}.screen.active{display:block}
+.header{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;border-bottom:0.5px solid rgba(0,0,0,0.1);margin-bottom:1.25rem;background:#fff;flex-wrap:wrap;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;padding:3px 10px;border-radius:6px}
+.badge-alta{background:#FCEBEB;color:#A32D2D}
+.badge-media{background:#FAEEDA;color:#854F0B}
+.badge-baja{background:#EAF3DE;color:#3B6D11}
+.badge-pendiente{background:#E6F1FB;color:#185FA5}
+.badge-proceso{background:#FAEEDA;color:#854F0B}
+.badge-completada{background:#EAF3DE;color:#3B6D11}
+.badge-vencida{background:#FCEBEB;color:#A32D2D}
+.task-card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px}
+.task-title{font-weight:500;font-size:14px;margin-bottom:6px}
+.task-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:#666}
+.task-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.btn{font-size:12px;padding:5px 12px;border-radius:6px;border:0.5px solid rgba(0,0,0,0.2);background:transparent;cursor:pointer;color:#1a1a18;font-family:inherit}
+.btn:hover{background:#f0f0ee}
+.btn-primary{background:#E6F1FB;color:#185FA5;border-color:#B5D4F4}
+.btn-danger{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
+.btn-success{background:#EAF3DE;color:#3B6D11;border-color:#C0DD97}
+.btn-lg{font-size:14px;padding:9px 16px;border-radius:8px}
+input,select,textarea{width:100%;padding:8px 10px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;background:#fff;color:#1a1a18;font-size:13px;font-family:inherit;margin-bottom:10px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#378ADD}
+textarea{height:70px;resize:vertical}
+label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;align-items:flex-start;justify-content:center;padding:30px 12px;overflow-y:auto}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:1.25rem;width:100%;max-width:420px;margin:auto}
+.modal h3{font-size:15px;font-weight:500;margin-bottom:1rem}
+.user-btn{display:flex;align-items:center;gap:10px;padding:0.85rem 1rem;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;background:#fff;cursor:pointer;margin-bottom:8px;width:100%;text-align:left}
+.user-btn:hover{background:#f5f5f3}
+.avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;font-size:13px;flex-shrink:0}
+.av-blue{background:#E6F1FB;color:#185FA5}
+.av-teal{background:#E1F5EE;color:#0F6E56}
+.av-purple{background:#EEEDFE;color:#534AB7}
+.av-coral{background:#FAECE7;color:#993C1D}
+.av-amber{background:#FAEEDA;color:#854F0B}
+.av-green{background:#EAF3DE;color:#3B6D11}
+.av-sup{background:#2C2C2A;color:#F1EFE8}
+.tabs{display:flex;margin-bottom:1rem;border-bottom:0.5px solid rgba(0,0,0,0.1);overflow-x:auto}
+.tab{padding:7px 14px;font-size:13px;cursor:pointer;color:#666;border-bottom:2px solid transparent;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;white-space:nowrap}
+.tab.active{color:#1a1a18;border-bottom-color:#1a1a18}
+.empty-state{text-align:center;padding:2.5rem;color:#888;font-size:13px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1.25rem}
+.stat-card{background:#f5f5f3;border-radius:8px;padding:0.75rem;text-align:center}
+.stat-num{font-size:22px;font-weight:500}
+.stat-lbl{font-size:11px;color:#666;margin-top:2px}
+.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.filter-row select{margin-bottom:0;width:auto;flex:1;min-width:90px}
+.bodega-title{font-size:12px;font-weight:500;color:#666;letter-spacing:0.04em;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.bodega-section{margin-bottom:1.5rem}
+.sup-row{display:flex;align-items:center;padding:0.75rem 1rem;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;margin-bottom:8px;background:#fff;gap:8px}
+.sup-row:hover{background:#f9f9f7}
+.count-badge{background:#f0f0ee;border-radius:20px;padding:1px 8px;font-size:11px;color:#666}
+.pin-wrap{display:flex;gap:8px;justify-content:center;margin:1rem 0}
+.pin-wrap input{width:48px;height:48px;text-align:center;font-size:20px;font-weight:500;padding:0;margin-bottom:0;border-radius:8px}
+.sync-bar{display:flex;align-items:center;gap:6px;font-size:11px;color:#666;margin-bottom:12px;padding:6px 10px;background:#f5f5f3;border-radius:8px}
+.notif-dot{width:8px;height:8px;background:#E24B4A;border-radius:50%;display:inline-block;flex-shrink:0}
+.spin{display:inline-block;animation:spin 1s linear infinite}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.profile-card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;display:flex;align-items:center;gap:10px}
+.av-colors{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.av-swatch{width:30px;height:30px;border-radius:50%;cursor:pointer;border:3px solid transparent}
+.av-swatch.selected{border-color:#378ADD}
+.section-title{font-size:13px;font-weight:500;color:#666;margin-bottom:10px;margin-top:4px;display:flex;align-items:center;justify-content:space-between}
+.settings-row{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:10px;padding:0.85rem 1rem;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.container{max-width:600px;margin:0 auto}
+@media(max-width:500px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- LOGIN -->
+<div id="s-login" class="screen active" style="padding:2rem 1.25rem">
+  <div style="text-align:center;margin-bottom:2rem">
+    <div style="font-size:40px;margin-bottom:8px">✅</div>
+    <h1 style="font-size:20px;font-weight:500" id="app-title">Tareas pendientes</h1>
+    <p style="font-size:13px;color:#666;margin-top:4px" id="app-subtitle">Control Logístico</p>
+  </div>
+  <p style="font-size:13px;color:#666;margin-bottom:12px;text-align:center">¿Quién eres?</p>
+  <div id="user-list"></div>
+</div>
+
+<!-- PIN AUXILIAR -->
+<div id="s-pin-user" class="screen" style="padding:2rem 1.25rem">
+  <div style="text-align:center;margin-bottom:1.5rem">
+    <div class="avatar" id="pin-user-av" style="margin:0 auto 10px;width:54px;height:54px;font-size:18px"></div>
+    <h2 style="font-size:16px;font-weight:500" id="pin-user-name"></h2>
+    <p style="font-size:13px;color:#666;margin-top:4px">Ingresa tu PIN</p>
+  </div>
+  <div class="pin-wrap">
+    <input type="password" maxlength="1" id="up0" inputmode="numeric">
+    <input type="password" maxlength="1" id="up1" inputmode="numeric">
+    <input type="password" maxlength="1" id="up2" inputmode="numeric">
+    <input type="password" maxlength="1" id="up3" inputmode="numeric">
+  </div>
+  <p style="color:#A32D2D;font-size:12px;text-align:center;display:none;margin-bottom:8px" id="upin-err">PIN incorrecto</p>
+  <div style="display:flex;gap:8px;margin-top:1rem">
+    <button class="btn btn-lg" onclick="goLogin()" style="flex:1">← Volver</button>
+    <button class="btn btn-primary btn-lg" onclick="checkUserPin()" style="flex:1">Entrar</button>
+  </div>
+</div>
+
+<!-- PIN SUPERVISOR -->
+<div id="s-pin-sup" class="screen" style="padding:2rem 1.25rem">
+  <div style="text-align:center;margin-bottom:1.5rem">
+    <div style="font-size:36px;margin-bottom:8px">🔒</div>
+    <h2 style="font-size:16px;font-weight:500" id="sup-name-hdr">Supervisor</h2>
+    <p style="font-size:13px;color:#666;margin-top:4px">Ingresa tu PIN</p>
+  </div>
+  <div class="pin-wrap">
+    <input type="password" maxlength="1" id="sp0" inputmode="numeric">
+    <input type="password" maxlength="1" id="sp1" inputmode="numeric">
+    <input type="password" maxlength="1" id="sp2" inputmode="numeric">
+    <input type="password" maxlength="1" id="sp3" inputmode="numeric">
+  </div>
+  <p style="color:#A32D2D;font-size:12px;text-align:center;display:none;margin-bottom:8px" id="spin-err">PIN incorrecto</p>
+  <div style="display:flex;gap:8px;margin-top:1rem">
+    <button class="btn btn-lg" onclick="goLogin()" style="flex:1">← Volver</button>
+    <button class="btn btn-primary btn-lg" onclick="checkSupPin()" style="flex:1">Entrar</button>
+  </div>
+</div>
+
+<!-- VISTA AUXILIAR -->
+<div id="s-user" class="screen">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="avatar" id="u-av"></div>
+      <div>
+        <div style="font-size:14px;font-weight:500" id="u-name"></div>
+        <div style="font-size:11px;color:#666" id="u-bod"></div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-primary" onclick="openTaskModal(false)">+ Nueva</button>
+      <button class="btn" onclick="logout()">Salir</button>
+    </div>
+  </div>
+  <div style="padding:0 1.25rem 1.25rem">
+    <div class="sync-bar"><span id="u-sync-icon">🔄</span> <span id="u-sync-txt">Sincronizando...</span></div>
+    <div class="tabs">
+      <button class="tab active" onclick="setTab('todas',this)">Todas</button>
+      <button class="tab" onclick="setTab('pendiente',this)">Pendientes</button>
+      <button class="tab" onclick="setTab('proceso',this)">En proceso</button>
+      <button class="tab" onclick="setTab('completada',this)">Completadas</button>
+    </div>
+    <div id="u-tasks"></div>
+  </div>
+</div>
+
+<!-- VISTA SUPERVISOR -->
+<div id="s-sup" class="screen">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="avatar av-sup" id="sup-av">EL</div>
+      <div>
+        <div style="font-size:14px;font-weight:500" id="sup-name-display">Supervisor</div>
+        <div style="font-size:11px;color:#666">Vista general</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="openTaskModal(true)">+ Asignar</button>
+      <button class="btn" onclick="showScreen('s-settings')">⚙️ Config</button>
+      <button class="btn" onclick="refreshSup()">↻</button>
+      <button class="btn" onclick="logout()">Salir</button>
+    </div>
+  </div>
+  <div style="padding:0 1.25rem 1.25rem">
+    <div class="sync-bar"><span id="sup-sync-icon">🔄</span> <span id="sup-sync-txt">Sincronizando...</span></div>
+    <div class="stat-grid" id="sup-stats"></div>
+    <div class="filter-row">
+      <select id="fil-bod" onchange="renderSup()"><option value="">Todas las áreas</option></select>
+      <select id="fil-est" onchange="renderSup()"><option value="">Todos los estados</option><option>pendiente</option><option>proceso</option><option>completada</option></select>
+      <select id="fil-pri" onchange="renderSup()"><option value="">Todas las prioridades</option><option>alta</option><option>media</option><option>baja</option></select>
+    </div>
+    <div id="sup-tasks"></div>
+  </div>
+</div>
+
+<!-- CONFIGURACIÓN (supervisor) -->
+<div id="s-settings" class="screen">
+  <div class="header">
+    <div style="font-size:15px;font-weight:500">⚙️ Configuración</div>
+    <button class="btn" onclick="showScreen('s-sup')">← Volver</button>
+  </div>
+  <div style="padding:0 1.25rem 1.25rem">
+
+    <!-- Mi perfil -->
+    <div class="section-title">Mi perfil de supervisor</div>
+    <div class="settings-row">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="avatar av-sup" id="cfg-sup-av" style="width:42px;height:42px"></div>
+        <div>
+          <div style="font-size:14px;font-weight:500" id="cfg-sup-name"></div>
+          <div style="font-size:12px;color:#666">Supervisor · PIN: ●●●●</div>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="openSupProfileModal()">✏️ Editar</button>
+    </div>
+
+    <!-- Bodegas/Áreas -->
+    <div class="section-title" style="margin-top:1.25rem">
+      Áreas / Bodegas
+      <button class="btn btn-success" onclick="addBodega()">+ Agregar</button>
+    </div>
+    <div id="bodegas-list"></div>
+
+    <!-- Perfiles auxiliares -->
+    <div class="section-title" style="margin-top:1.25rem">
+      Auxiliares
+      <button class="btn btn-success" onclick="openProfileModal(null)">+ Nuevo</button>
+    </div>
+    <div id="profile-list"></div>
+  </div>
+</div>
+
+<!-- MODAL TAREA -->
+<div class="modal-bg" id="modal-task">
+  <div class="modal">
+    <h3 id="modal-task-title">Nueva tarea</h3>
+    <div id="modal-saving" style="display:none;text-align:center;padding:1.5rem;color:#666;font-size:13px">
+      <div style="font-size:24px;margin-bottom:8px" class="spin">⏳</div>Guardando...
+    </div>
+    <div id="modal-form">
+      <label class="lbl">Descripción / OBS</label>
+      <textarea id="f-desc" placeholder="Ej: OBS-11136 pendiente de pago 70%..."></textarea>
+      <label class="lbl">Prioridad</label>
+      <select id="f-pri"><option value="alta">🔴 Alta</option><option value="media" selected>🟡 Media</option><option value="baja">🟢 Baja</option></select>
+      <label class="lbl">Estado</label>
+      <select id="f-est"><option value="pendiente">Pendiente</option><option value="proceso">En proceso</option><option value="completada">Completada</option></select>
+      <label class="lbl">Fecha límite</label>
+      <input type="date" id="f-fecha">
+      <label class="lbl">Recordatorio</label>
+      <input type="date" id="f-rec">
+      <label class="lbl">Notas adicionales</label>
+      <input type="text" id="f-notas" placeholder="Opcional">
+      <div id="f-assign-wrap" style="display:none">
+        <label class="lbl">Asignar a</label>
+        <select id="f-assign"><option value="">— Sin asignar —</option></select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button class="btn btn-lg" onclick="closeTaskModal()" style="flex:1">Cancelar</button>
+        <button class="btn btn-primary btn-lg" onclick="saveTask()" style="flex:1">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PERFIL AUXILIAR -->
+<div class="modal-bg" id="modal-profile">
+  <div class="modal">
+    <h3 id="pf-modal-title">Nuevo auxiliar</h3>
+    <input type="hidden" id="pf-id">
+    <label class="lbl">Nombre completo</label>
+    <input type="text" id="pf-name" placeholder="Nombre completo">
+    <label class="lbl">Área / Bodega</label>
+    <select id="pf-bod"></select>
+    <label class="lbl">Color de avatar</label>
+    <div class="av-colors" id="pf-colors"></div>
+    <label class="lbl">PIN (4 dígitos)</label>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <input type="password" maxlength="1" class="pf-pin" id="pp0" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
+      <input type="password" maxlength="1" class="pf-pin" id="pp1" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
+      <input type="password" maxlength="1" class="pf-pin" id="pp2" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
+      <input type="password" maxlength="1" class="pf-pin" id="pp3" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
+      <span style="font-size:11px;color:#888;align-self:center;margin-left:4px">Dejar vacío = sin cambio</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-lg" onclick="closeProfileModal()" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary btn-lg" onclick="saveProfile()" style="flex:1">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PERFIL SUPERVISOR -->
+<div class="modal-bg" id="modal-sup-profile">
+  <div class="modal">
+    <h3>Mi perfil</h3>
+    <label class="lbl">Nombre</label>
+    <input type="text" id="sp-name" placeholder="Tu nombre">
+    <label class="lbl">Título / Cargo</label>
+    <input type="text" id="sp-role" placeholder="Ej: Control Logístico">
+    <label class="lbl">Nombre de la app</label>
+    <input type="text" id="sp-appname" placeholder="Ej: Tareas pendientes">
+    <label class="lbl">Nuevo PIN (dejar vacío para no cambiar)</label>
+    <div style="display:flex;gap:6px;margin-bottom:10px">
+      <input type="password" maxlength="1" id="spp0" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
+      <input type="password" maxlength="1" id="spp1" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
+      <input type="password" maxlength="1" id="spp2" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
+      <input type="password" maxlength="1" id="spp3" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn btn-lg" onclick="document.getElementById('modal-sup-profile').classList.remove('open')" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary btn-lg" onclick="saveSupProfile()" style="flex:1">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzRpHL62jtFyZzOoBjW_j2oZSSIqN3UGbHSv6IRufWyYmKFMp9gABQFphRssKTfl7X2bA/exec';
+const SHEET_ID='1pEgdJ0eLkMiVvr0kI1_TZGHHcL0bi7J2PQY49SKK-wM';
+
+const AV_COLORS=[
+  {cls:'av-blue'},{cls:'av-teal'},{cls:'av-purple'},
+  {cls:'av-coral'},{cls:'av-amber'},{cls:'av-green'}
+];
+
+const DEFAULTS={
+  supName:'Everth Leal',supRole:'Control Logístico',appName:'Tareas pendientes',supPin:'1234',
+  bodegas:['ALOPSA 1','ALOPSA 2','ALOPSA 3','Bodega Pahame'],
+  users:[
+    {id:'u1',name:'Lourdes Borja',bodega:'ALOPSA 1',av:'av-blue',pin:'1111'},
+    {id:'u2',name:'Melany Pineda',bodega:'ALOPSA 2',av:'av-teal',pin:'2222'},
+    {id:'u3',name:'Roxana Villeda',bodega:'ALOPSA 3',av:'av-purple',pin:'3333'},
+    {id:'u4',name:'David Alonzo',bodega:'Bodega Pahame',av:'av-coral',pin:'4444'},
+  ]
+};
+
+function getCfg(){try{return Object.assign({},DEFAULTS,JSON.parse(localStorage.getItem('alopsa_cfg')||'{}'))}catch(e){return Object.assign({},DEFAULTS)}}
+function saveCfg(c){localStorage.setItem('alopsa_cfg',JSON.stringify(c))}
+function getUsers(){return getCfg().users||[]}
+function getBodegas(){return getCfg().bodegas||DEFAULTS.bodegas}
+function getLocal(){try{return JSON.parse(localStorage.getItem('tasks_alopsa_v3')||'[]')}catch(e){return[]}}
+function saveLocal(t){try{localStorage.setItem('tasks_alopsa_v3',JSON.stringify(t))}catch(e){}}
+function ini(name){return name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase()}
+function isVencida(t){if(!t.fecha||t.estado==='completada')return false;return t.fecha<new Date().toISOString().split('T')[0]}
+function hasReminder(t){if(!t.reminder||t.estado==='completada')return false;return t.reminder<=new Date().toISOString().split('T')[0]}
+
+let currentUser=null,currentTab='todas',editingId=null,isSup=false,allTasks=[],pendingUser=null,selAv='av-blue';
+
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');if(id==='s-settings')renderSettings()}
+
+function setSyncStatus(scr,msg,ok=true){
+  const txt=document.getElementById(scr+'-sync-txt'),icon=document.getElementById(scr+'-sync-icon');
+  if(txt)txt.textContent=msg;if(icon)icon.textContent=ok?'✅':'⚠️';
+}
+
+async function requestNotif(){
+  if(!('Notification' in window))return;
+  if(Notification.permission!=='granted')await Notification.requestPermission();
+}
+
+function checkAndNotify(){
+  if(Notification.permission!=='granted')return;
+  const today=new Date().toISOString().split('T')[0];
+  allTasks.filter(t=>t.userId===currentUser?.id&&hasReminder(t)).forEach(t=>{
+    const key='notif_'+t.id+'_'+today;
+    if(!localStorage.getItem(key)){
+      new Notification('🔔 Recordatorio',{body:t.desc});
+      localStorage.setItem(key,'1');
+    }
+  });
+}
+
+async function syncFromSheets(scr='u'){
+  setSyncStatus(scr,'Sincronizando...',true);
+  try{
+    const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Sheet1&t=${Date.now()}`;
+    const res=await fetch(url);const text=await res.text();
+    const match=text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/);
+    if(!match)throw new Error();
+    const rows=JSON.parse(match[1]).table?.rows||[];
+    const tasks=rows.map(r=>{const c=r.c||[];const v=i=>c[i]&&c[i].v!=null?String(c[i].v):'';
+      return{id:v(0),desc:v(1),prioridad:v(2),estado:v(3),fecha:v(4),reminder:v(5),userId:v(6),bodega:v(7),correo:v(8),notas:v(12),createdAt:v(10)};
+    }).filter(t=>t.id&&t.id!=='ID');
+    allTasks=tasks;saveLocal(tasks);setSyncStatus(scr,'Sincronizado ✓');return tasks;
+  }catch(e){allTasks=getLocal();setSyncStatus(scr,'Sin conexión — datos locales',false);return allTasks;}
+}
+
+async function postToSheet(data){try{await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(data)});return true}catch(e){return false}}
+
+// LOGIN
+function goLogin(){
+  pendingUser=null;
+  buildUserList();
+  showScreen('s-login');
+}
+
+function selectUser(uid){
+  const u=getUsers().find(x=>x.id===uid);if(!u)return;
+  pendingUser=u;
+  document.getElementById('pin-user-name').textContent=u.name;
+  const av=document.getElementById('pin-user-av');av.className='avatar '+u.av;av.textContent=ini(u.name);
+  ['up0','up1','up2','up3'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('upin-err').style.display='none';
+  showScreen('s-pin-user');
+  setTimeout(()=>document.getElementById('up0').focus(),100);
+}
+
+function checkUserPin(){
+  const pin=['up0','up1','up2','up3'].map(id=>document.getElementById(id).value).join('');
+  if(pin===pendingUser.pin){
+    currentUser=pendingUser;isSup=false;currentTab='todas';
+    document.getElementById('u-name').textContent=currentUser.name;
+    document.getElementById('u-bod').textContent=currentUser.bodega;
+    const av=document.getElementById('u-av');av.className='avatar '+currentUser.av;av.textContent=ini(currentUser.name);
+    showScreen('s-user');requestNotif();
+    syncFromSheets('u').then(()=>{renderUser();checkAndNotify()});
+  }else{
+    document.getElementById('upin-err').style.display='block';
+    ['up0','up1','up2','up3'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('up0').focus();
+  }
+}
+
+function checkSupPin(){
+  const pin=['sp0','sp1','sp2','sp3'].map(id=>document.getElementById(id).value).join('');
+  const cfg=getCfg();
+  if(pin===cfg.supPin){
+    isSup=true;currentUser={id:'supervisor'};
+    ['sp0','sp1','sp2','sp3'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('spin-err').style.display='none';
+    const supAv=document.getElementById('sup-av');
+    supAv.textContent=ini(cfg.supName||'EL');
+    document.getElementById('sup-name-display').textContent=cfg.supName||'Supervisor';
+    showScreen('s-sup');
+    syncFromSheets('sup').then(()=>renderSup());
+  }else{
+    document.getElementById('spin-err').style.display='block';
+    ['sp0','sp1','sp2','sp3'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('sp0').focus();
+  }
+}
+
+function logout(){currentUser=null;isSup=false;pendingUser=null;allTasks=getLocal();buildUserList();showScreen('s-login')}
+
+// PIN auto-advance
+function wirePin(ids,checkFn){
+  ids.forEach((id,i)=>{
+    const el=document.getElementById(id);
+    el.addEventListener('input',()=>{
+      if(el.value&&i<ids.length-1)document.getElementById(ids[i+1]).focus();
+      if(i===ids.length-1&&el.value&&checkFn)checkFn();
+    });
+  });
+}
+wirePin(['up0','up1','up2','up3'],checkUserPin);
+wirePin(['sp0','sp1','sp2','sp3'],checkSupPin);
+wirePin(['pp0','pp1','pp2','pp3'],null);
+wirePin(['spp0','spp1','spp2','spp3'],null);
+
+function setTab(f,el){currentTab=f;document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderUser()}
+
+function renderUser(){
+  const my=allTasks.filter(t=>t.userId===currentUser.id);
+  const filtered=currentTab==='todas'?my:my.filter(t=>t.estado===currentTab);
+  const sorted=filtered.sort((a,b)=>{const p={alta:0,media:1,baja:2};return(p[a.prioridad]||1)-(p[b.prioridad]||1)||(a.fecha||'').localeCompare(b.fecha||'')});
+  const c=document.getElementById('u-tasks');
+  if(!sorted.length){c.innerHTML=`<div class="empty-state">😊<br><br>Sin tareas aquí</div>`;return}
+  c.innerHTML=sorted.map(t=>{
+    const v=isVencida(t),r=hasReminder(t);
+    return`<div class="task-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+        <div class="task-title">${t.desc}</div>
+        <span class="badge badge-${v?'vencida':t.estado}">${v?'⚠️ vencida':t.estado}</span>
+      </div>
+      <div class="task-meta" style="margin-top:6px">
+        <span class="badge badge-${t.prioridad}">🚩 ${t.prioridad}</span>
+        ${t.fecha?`<span>📅 ${t.fecha}</span>`:''}
+        ${r?`<span style="color:#A32D2D">🔔 Recordatorio hoy</span>`:''}
+        ${t.notas?`<span style="color:#888">${t.notas}</span>`:''}
+      </div>
+      <div class="task-actions">
+        <button class="btn" onclick="editTask('${t.id}')">✏️ Editar</button>
+        <button class="btn btn-primary" onclick="cycleStatus('${t.id}')">${t.estado==='pendiente'?'▶ Iniciar':t.estado==='proceso'?'✓ Completar':'↩ Reabrir'}</button>
+        <button class="btn btn-danger" onclick="delTask('${t.id}',false)">🗑</button>
+      </div>
+    </div>`}).join('');
+}
+
+function renderSup(){
+  const cfg=getCfg();const USERS=cfg.users||[];const bodegas=cfg.bodegas||[];
+  const fb=document.getElementById('fil-bod').value,fe=document.getElementById('fil-est').value,fp=document.getElementById('fil-pri').value;
+  // update filter options
+  const filBod=document.getElementById('fil-bod');
+  const prev=filBod.value;
+  filBod.innerHTML='<option value="">Todas las áreas</option>'+bodegas.map(b=>`<option>${b}</option>`).join('');
+  if(prev)filBod.value=prev;
+  const total=allTasks.length,pend=allTasks.filter(t=>t.estado==='pendiente').length,proc=allTasks.filter(t=>t.estado==='proceso').length,venc=allTasks.filter(isVencida).length;
+  document.getElementById('sup-stats').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#185FA5">${pend}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#854F0B">${proc}</div><div class="stat-lbl">En proceso</div></div>
+    <div class="stat-card"><div class="stat-num" style="color:#A32D2D">${venc}</div><div class="stat-lbl">Vencidas</div></div>`;
+  const filtered=allTasks.filter(t=>(!fb||t.bodega===fb)&&(!fe||t.estado===fe)&&(!fp||t.prioridad===fp));
+  const activeBodegas=fb?[fb]:bodegas;
+  const grouped={};filtered.forEach(t=>{if(!grouped[t.bodega])grouped[t.bodega]=[];grouped[t.bodega].push(t)});
+  document.getElementById('sup-tasks').innerHTML=activeBodegas.map(b=>{
+    const bt=(grouped[b]||[]).sort((a,c)=>{const p={alta:0,media:1,baja:2};return(p[a.prioridad]||1)-(p[c.prioridad]||1)});
+    if(!bt.length)return`<div class="bodega-section"><div class="bodega-title">🏭 ${b} <span class="count-badge">0</span></div><p style="font-size:12px;color:#888;padding-bottom:12px">Sin tareas</p></div>`;
+    return`<div class="bodega-section"><div class="bodega-title">🏭 ${b} <span class="count-badge">${bt.length}</span></div>${bt.map(t=>{
+      const u=USERS.find(x=>x.id===t.userId),v=isVencida(t);
+      return`<div class="sup-row">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;align-items:center">
+            ${u?`<div style="display:flex;align-items:center;gap:4px"><div class="avatar ${u.av}" style="width:20px;height:20px;font-size:9px">${ini(u.name)}</div><span style="font-size:11px;color:#666">${u.name}</span></div>`:''}
+            ${t.fecha?`<span style="font-size:11px;color:#666">📅 ${t.fecha}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0">
+          <span class="badge badge-${v?'vencida':t.estado}">${v?'vencida':t.estado}</span>
+          <span class="badge badge-${t.prioridad}">${t.prioridad}</span>
+        </div>
+        <div style="display:flex;gap:4px;flex-shrink:0">
+          <button class="btn" onclick="editTaskSup('${t.id}')">✏️</button>
+          <button class="btn btn-danger" onclick="delTask('${t.id}',true)">🗑</button>
+        </div>
+      </div>`}).join('')}</div>`;
+  }).join('');
+}
+
+async function refreshSup(){await syncFromSheets('sup');renderSup()}
+
+// SETTINGS
+function renderSettings(){
+  const cfg=getCfg();
+  // sup profile
+  document.getElementById('cfg-sup-av').textContent=ini(cfg.supName||'EL');
+  document.getElementById('cfg-sup-name').textContent=cfg.supName||'Supervisor';
+  // bodegas
+  document.getElementById('bodegas-list').innerHTML=(cfg.bodegas||[]).map((b,i)=>`
+    <div class="settings-row">
+      <span style="font-size:14px">🏭 ${b}</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn" onclick="editBodega(${i})">✏️</button>
+        <button class="btn btn-danger" onclick="deleteBodega(${i})">🗑</button>
+      </div>
+    </div>`).join('');
+  // users
+  document.getElementById('profile-list').innerHTML=(cfg.users||[]).map(u=>`
+    <div class="settings-row">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="avatar ${u.av}" style="width:36px;height:36px">${ini(u.name)}</div>
+        <div><div style="font-size:13px;font-weight:500">${u.name}</div><div style="font-size:11px;color:#666">${u.bodega}</div></div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-primary" onclick="openProfileModal('${u.id}')">✏️</button>
+        <button class="btn btn-danger" onclick="deleteUser('${u.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+// BODEGAS
+function addBodega(){
+  const name=prompt('Nombre del área / bodega:');
+  if(!name||!name.trim())return;
+  const cfg=getCfg();cfg.bodegas.push(name.trim());saveCfg(cfg);renderSettings();
+}
+function editBodega(i){
+  const cfg=getCfg();
+  const name=prompt('Nuevo nombre:',cfg.bodegas[i]);
+  if(!name||!name.trim())return;
+  cfg.bodegas[i]=name.trim();saveCfg(cfg);renderSettings();
+}
+function deleteBodega(i){
+  if(!confirm('¿Eliminar esta área?'))return;
+  const cfg=getCfg();cfg.bodegas.splice(i,1);saveCfg(cfg);renderSettings();
+}
+
+// PERFIL AUXILIAR
+function openProfileModal(uid){
+  const cfg=getCfg();
+  const u=uid?cfg.users.find(x=>x.id===uid):null;
+  document.getElementById('pf-modal-title').textContent=u?'Editar auxiliar':'Nuevo auxiliar';
+  document.getElementById('pf-id').value=uid||'';
+  document.getElementById('pf-name').value=u?u.name:'';
+  selAv=u?u.av:'av-blue';
+  // bodegas select
+  const sel=document.getElementById('pf-bod');
+  sel.innerHTML=cfg.bodegas.map(b=>`<option>${b}</option>`).join('');
+  if(u)sel.value=u.bodega;
+  // colors
+  document.getElementById('pf-colors').innerHTML=AV_COLORS.map(c=>`<div class="av-swatch ${c.cls}${c.cls===selAv?' selected':''}" onclick="pickAv('${c.cls}',this)"></div>`).join('');
+  ['pp0','pp1','pp2','pp3'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-profile').classList.add('open');
+}
+
+function pickAv(cls,el){selAv=cls;document.querySelectorAll('.av-swatch').forEach(s=>s.classList.remove('selected'));el.classList.add('selected')}
+function closeProfileModal(){document.getElementById('modal-profile').classList.remove('open')}
+
+function saveProfile(){
+  const name=document.getElementById('pf-name').value.trim();if(!name)return;
+  const cfg=getCfg();
+  const uid=document.getElementById('pf-id').value;
+  const newPin=['pp0','pp1','pp2','pp3'].map(id=>document.getElementById(id).value).join('');
+  const bodega=document.getElementById('pf-bod').value;
+  if(uid){
+    const idx=cfg.users.findIndex(u=>u.id===uid);
+    if(idx>-1){
+      cfg.users[idx].name=name;cfg.users[idx].bodega=bodega;cfg.users[idx].av=selAv;
+      if(/^\d{4}$/.test(newPin))cfg.users[idx].pin=newPin;
+    }
+  }else{
+    if(!/^\d{4}$/.test(newPin)){alert('El PIN debe tener 4 dígitos');return}
+    cfg.users.push({id:'u'+Date.now(),name,bodega,av:selAv,pin:newPin});
+  }
+  saveCfg(cfg);closeProfileModal();renderSettings();buildUserList();
+}
+
+function deleteUser(uid){
+  if(!confirm('¿Eliminar este auxiliar?'))return;
+  const cfg=getCfg();cfg.users=cfg.users.filter(u=>u.id!==uid);saveCfg(cfg);renderSettings();buildUserList();
+}
+
+// PERFIL SUPERVISOR
+function openSupProfileModal(){
+  const cfg=getCfg();
+  document.getElementById('sp-name').value=cfg.supName||'';
+  document.getElementById('sp-role').value=cfg.supRole||'';
+  document.getElementById('sp-appname').value=cfg.appName||'';
+  ['spp0','spp1','spp2','spp3'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('modal-sup-profile').classList.add('open');
+}
+
+function saveSupProfile(){
+  const cfg=getCfg();
+  const name=document.getElementById('sp-name').value.trim();
+  if(name)cfg.supName=name;
+  cfg.supRole=document.getElementById('sp-role').value.trim();
+  cfg.appName=document.getElementById('sp-appname').value.trim();
+  const newPin=['spp0','spp1','spp2','spp3'].map(id=>document.getElementById(id).value).join('');
+  if(/^\d{4}$/.test(newPin))cfg.supPin=newPin;
+  saveCfg(cfg);
+  document.getElementById('modal-sup-profile').classList.remove('open');
+  applyAppMeta();renderSettings();
+  document.getElementById('sup-name-display').textContent=cfg.supName||'Supervisor';
+  document.getElementById('sup-av').textContent=ini(cfg.supName||'EL');
+}
+
+// MODAL TAREA
+function openTaskModal(sup=false){
+  editingId=null;
+  document.getElementById('modal-task-title').textContent=sup?'Asignar tarea':'Nueva tarea';
+  ['f-desc','f-fecha','f-rec','f-notas'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-pri').value='media';document.getElementById('f-est').value='pendiente';
+  const aw=document.getElementById('f-assign-wrap');
+  if(sup){
+    aw.style.display='block';
+    const s=document.getElementById('f-assign');
+    const users=getUsers();
+    s.innerHTML='<option value="">— Sin asignar —</option>'+users.map(u=>`<option value="${u.id}">${u.name} — ${u.bodega}</option>`).join('');
+  }else aw.style.display='none';
+  document.getElementById('modal-saving').style.display='none';
+  document.getElementById('modal-form').style.display='block';
+  document.getElementById('modal-task').classList.add('open');
+}
+
+function fillTaskModal(t,sup=false){
+  editingId=t.id;
+  document.getElementById('modal-task-title').textContent='Editar tarea';
+  document.getElementById('f-desc').value=t.desc||'';
+  document.getElementById('f-pri').value=t.prioridad||'media';
+  document.getElementById('f-est').value=t.estado||'pendiente';
+  document.getElementById('f-fecha').value=t.fecha||'';
+  document.getElementById('f-rec').value=t.reminder||'';
+  document.getElementById('f-notas').value=t.notas||'';
+  const aw=document.getElementById('f-assign-wrap');
+  if(sup){
+    aw.style.display='block';
+    const s=document.getElementById('f-assign');
+    const users=getUsers();
+    s.innerHTML='<option value="">— Sin asignar —</option>'+users.map(u=>`<option value="${u.id}">${u.name} — ${u.bodega}</option>`).join('');
+    s.value=t.userId||'';
+  }else aw.style.display='none';
+  document.getElementById('modal-saving').style.display='none';
+  document.getElementById('modal-form').style.display='block';
+  document.getElementById('modal-task').classList.add('open');
+}
+
+function editTask(id){const t=allTasks.find(t=>t.id===id);if(t)fillTaskModal(t,false)}
+function editTaskSup(id){const t=allTasks.find(t=>t.id===id);if(t)fillTaskModal(t,true)}
+function closeTaskModal(){document.getElementById('modal-task').classList.remove('open');editingId=null}
+
+async function saveTask(){
+  const desc=document.getElementById('f-desc').value.trim();if(!desc)return;
+  document.getElementById('modal-form').style.display='none';
+  document.getElementById('modal-saving').style.display='block';
+  const sup=document.getElementById('f-assign-wrap').style.display!=='none';
+  const assignId=sup?document.getElementById('f-assign').value:currentUser?.id||'';
+  const users=getUsers();
+  const assignedUser=users.find(u=>u.id===assignId)||currentUser;
+  const existing=editingId?allTasks.find(t=>t.id===editingId):null;
+  const task={id:editingId||'t'+Date.now(),desc,prioridad:document.getElementById('f-pri').value,estado:document.getElementById('f-est').value,fecha:document.getElementById('f-fecha').value,reminder:document.getElementById('f-rec').value,notas:document.getElementById('f-notas').value,userId:assignId||currentUser?.id||'',bodega:assignedUser?.bodega||currentUser?.bodega||'',correo:'',createdAt:existing?.createdAt||new Date().toISOString()};
+  await postToSheet({action:editingId?'update':'append',...task});
+  if(editingId){const idx=allTasks.findIndex(t=>t.id===editingId);if(idx>-1)allTasks[idx]=task;}else allTasks.push(task);
+  saveLocal(allTasks);closeTaskModal();
+  if(isSup)renderSup();else renderUser();
+}
+
+async function cycleStatus(id){
+  const t=allTasks.find(t=>t.id===id);if(!t)return;
+  t.estado=t.estado==='pendiente'?'proceso':t.estado==='proceso'?'completada':'pendiente';
+  await postToSheet({action:'update',...t});saveLocal(allTasks);renderUser();
+}
+
+async function delTask(id,sup=false){
+  if(!confirm('¿Eliminar esta tarea?'))return;
+  await postToSheet({action:'delete',id});
+  allTasks=allTasks.filter(t=>t.id!==id);saveLocal(allTasks);
+  if(sup)renderSup();else renderUser();
+}
+
+function applyAppMeta(){
+  const cfg=getCfg();
+  document.getElementById('app-title').textContent=cfg.appName||'Tareas pendientes';
+  document.getElementById('app-subtitle').textContent=cfg.supRole||'Control Logístico';
+  document.getElementById('sup-name-hdr').textContent=cfg.supName||'Supervisor';
+  document.title=cfg.appName||'Tareas Pendientes';
+}
+
+function buildUserList(){
+  const cfg=getCfg();const users=cfg.users||[];
+  const today=new Date().toISOString().split('T')[0];
+  document.getElementById('user-list').innerHTML=users.map(u=>{
+    const hasAlert=allTasks.some(t=>t.userId===u.id&&t.reminder&&t.reminder<=today&&t.estado!=='completada');
+    return`<button class="user-btn" onclick="selectUser('${u.id}')">
+      <div class="avatar ${u.av}">${ini(u.name)}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:500">${u.name}</div><div style="font-size:12px;color:#666">${u.bodega}</div></div>
+      ${hasAlert?`<span class="notif-dot" style="margin-right:4px"></span>`:''}
+      <span style="color:#ccc;font-size:16px">🔒</span>
+    </button>`}).join('')+`
+    <button class="user-btn" onclick="showScreen('s-pin-sup')" style="margin-top:12px">
+      <div class="avatar av-sup">${ini(cfg.supName||'EL')}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:500">${cfg.supName||'Supervisor'}</div><div style="font-size:12px;color:#666">Vista general</div></div>
+      <span style="font-size:16px">🔒</span>
+    </button>`;
+}
+
+applyAppMeta();allTasks=getLocal();buildUserList();
+</script>
+</div>
+</body>
+</html>
