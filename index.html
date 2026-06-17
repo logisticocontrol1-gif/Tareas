@@ -80,6 +80,23 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
 .container{max-width:600px;margin:0 auto}
 @media(max-width:500px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
 
+/* ── TOAST NOTIFICATIONS ── */
+.toast-container{position:fixed;top:20px;right:16px;z-index:9999;display:flex;flex-direction:column;gap:8px;max-width:320px}
+.toast{background:#1a3a5c;color:#fff;padding:12px 16px;border-radius:10px;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,0.2);display:flex;align-items:flex-start;gap:10px;animation:slideIn 0.3s ease;pointer-events:all}
+.toast.success{background:#3B6D11}
+.toast.warning{background:#854F0B}
+.toast.reminder{background:#1a3a5c;border-left:4px solid #E8A020}
+.toast-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+.toast-body{flex:1}
+.toast-title{font-weight:600;font-size:12px;margin-bottom:2px}
+.toast-msg{font-size:12px;opacity:0.9;line-height:1.4}
+.toast-close{background:none;border:none;color:#fff;cursor:pointer;font-size:16px;opacity:0.7;flex-shrink:0;padding:0;line-height:1}
+.toast-close:hover{opacity:1}
+.toast-progress{height:3px;background:rgba(255,255,255,0.3);border-radius:2px;margin-top:8px;overflow:hidden}
+.toast-progress-bar{height:100%;background:rgba(255,255,255,0.8);border-radius:2px;transition:width linear}
+@keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(120%);opacity:0}}
+
 /* ── LOGOS SVG ── */
 .logo-cl{display:inline-flex;flex-direction:column;align-items:flex-start;gap:1px;line-height:1}
 .logo-cl-top{font-size:13px;font-weight:700;letter-spacing:4px;color:#4a6fa5}
@@ -102,6 +119,9 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
 </head>
 <body>
 <div class="container">
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
 
 <!-- LOGIN -->
 <div id="s-login" class="screen active" style="padding:2rem 1.25rem">
@@ -354,7 +374,13 @@ function ini(n){return n.split(' ').map(w=>w[0]).join('').substring(0,2).toUpper
 function isVencida(t){if(!t.fecha||t.estado==='completada'||t.archived)return false;return t.fecha<today()}
 function today(){return new Date().toISOString().split('T')[0]}
 function nowStr(){return new Date().toISOString().slice(0,16)}
-function fmtDate(s){if(!s)return '';return s.replace('T',' ').slice(0,16)}
+function fmtDate(s){
+  if(!s)return '';
+  // Handle Google Sheets Date(year,month,day) format
+  const m=String(s).match(/Date\((\d+),(\d+),(\d+)\)/);
+  if(m){const d=new Date(parseInt(m[1]),parseInt(m[2]),parseInt(m[3]));return d.toISOString().slice(0,10);}
+  return String(s).replace('T',' ').slice(0,16);
+}
 function isFrac(t){return t.estado==='fraccionado'}
 
 function getBodegaLogoHTML(b,small=true){
@@ -435,7 +461,7 @@ function checkUserPin(){
     const av=document.getElementById('u-av');av.className='avatar '+currentUser.av;av.textContent=ini(currentUser.name);
     document.getElementById('u-bodega-logo').innerHTML=getBodegaLogoHTML(currentUser.bodega,true);
     showScreen('s-user');requestNotif();
-    syncFromSheets('u').then(()=>{renderUser();checkAndNotify()});
+    syncFromSheets('u').then(()=>{renderUser();checkAndShowToasts();});
   }else{
     document.getElementById('upin-err').style.display='block';
     ['up0','up1','up2','up3'].forEach(id=>document.getElementById(id).value='');
@@ -677,6 +703,7 @@ async function saveTask(){
   await postToSheet({action:editingId?'update':'append',...task});
   if(editingId){const idx=allTasks.findIndex(t=>t.id===editingId);if(idx>-1)allTasks[idx]=task;}else allTasks.push(task);
   saveLocal(allTasks);autoArchive();closeTaskModal();
+  showToast('Tarea guardada','Los cambios se guardaron correctamente','success',3000);
   if(isSup)renderSup();else renderUser();
 }
 async function cycleStatus(id){
@@ -708,6 +735,72 @@ function buildUserList(){
       <span style="font-size:14px">🔒</span>
     </button>`;
 }
+// ── TOAST SYSTEM ──
+function showToast(title, msg, type='info', duration=5000){
+  const container=document.getElementById('toast-container');
+  const toast=document.createElement('div');
+  toast.className='toast '+(type==='success'?'success':type==='warning'?'warning':type==='reminder'?'reminder':'');
+  const icon=type==='success'?'✅':type==='warning'?'⚠️':type==='reminder'?'🔔':'ℹ️';
+  toast.innerHTML=`
+    <span class="toast-icon">${icon}</span>
+    <div class="toast-body">
+      <div class="toast-title">${title}</div>
+      <div class="toast-msg">${msg}</div>
+      <div class="toast-progress"><div class="toast-progress-bar" id="pb_${Date.now()}" style="width:100%"></div></div>
+    </div>
+    <button class="toast-close" onclick="this.closest('.toast').remove()">✕</button>
+  `;
+  container.appendChild(toast);
+  // Progress bar
+  const pb=toast.querySelector('.toast-progress-bar');
+  const start=Date.now();
+  const interval=setInterval(()=>{
+    const pct=Math.max(0,100-((Date.now()-start)/duration*100));
+    pb.style.width=pct+'%';
+    if(pct<=0){clearInterval(interval);}
+  },50);
+  // Auto remove
+  setTimeout(()=>{
+    toast.style.animation='slideOut 0.3s ease forwards';
+    setTimeout(()=>toast.remove(),300);
+  },duration);
+}
+
+function checkAndShowToasts(){
+  if(!currentUser||isSup)return;
+  const now=nowStr();
+  const today=today_str();
+  allTasks.filter(t=>t.userId===currentUser.id&&!t.archived).forEach(t=>{
+    // Reminder toast
+    if(t.reminder&&t.reminder<=now&&t.estado!=='completada'){
+      const key='toast_rem_'+t.id+'_'+t.reminder.slice(0,13);
+      if(!sessionStorage.getItem(key)){
+        showToast('🔔 Recordatorio',t.desc,'reminder',8000);
+        sessionStorage.setItem(key,'1');
+        // Browser notification too
+        if(Notification.permission==='granted'){
+          const nkey='notif_'+t.id+'_'+t.reminder;
+          if(!localStorage.getItem(nkey)){
+            new Notification('🔔 Recordatorio — Control Logístico',{body:t.desc});
+            localStorage.setItem(nkey,'1');
+          }
+        }
+      }
+    }
+    // Vencida toast
+    if(isVencida(t)){
+      const key='toast_venc_'+t.id+'_'+today;
+      if(!sessionStorage.getItem(key)){
+        showToast('⚠️ Tarea vencida',t.desc,'warning',7000);
+        sessionStorage.setItem(key,'1');
+      }
+    }
+  });
+  setTimeout(checkAndShowToasts,60000);
+}
+
+function today_str(){return new Date().toISOString().split('T')[0]}
+
 applyMeta();allTasks=getLocal();autoArchive();buildUserList();
 </script>
 </div>
