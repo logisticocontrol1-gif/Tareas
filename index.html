@@ -106,17 +106,14 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
 <!-- LOGIN -->
 <div id="s-login" class="screen active" style="padding:2rem 1.25rem">
   <div style="text-align:center;margin-bottom:1.75rem">
-    <div style="display:inline-block;text-align:left">
-      <div class="logo-cl">
-        <div class="logo-cl-top">CONTROL</div>
-        <div class="logo-cl-bot">
-          <span class="logo-cl-l">L</span>
-          <span class="logo-cl-arrow">⟷</span>
-          <span class="logo-cl-rest">GÍSTICO</span>
-        </div>
-        <div class="logo-cl-bar"></div>
-      </div>
-    </div>
+    <svg width="240" height="68" viewBox="0 0 240 68" xmlns="http://www.w3.org/2000/svg">
+      <text x="2" y="20" font-family="Arial,sans-serif" font-weight="700" font-size="13" fill="#4a6fa5" letter-spacing="5">CONTROL</text>
+      <text x="0" y="58" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="36" fill="#1a3a5c" font-style="italic">L</text>
+      <text x="26" y="58" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="36" fill="#E8A020" font-style="italic">O</text>
+      <text x="52" y="58" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="36" fill="#1a3a5c" font-style="italic">GÍSTICO</text>
+      <rect x="0" y="62" width="232" height="3" rx="1.5" fill="url(#clg)"/>
+      <defs><linearGradient id="clg" x1="0" x2="1" y1="0" y2="0"><stop offset="0%" stop-color="#1a3a5c"/><stop offset="50%" stop-color="#4a6fa5"/><stop offset="100%" stop-color="#E8A020"/></linearGradient></defs>
+    </svg>
     <p style="font-size:13px;color:#888;margin-top:10px" id="app-subtitle">Sistema de Tareas</p>
   </div>
   <p style="font-size:13px;color:#666;margin-bottom:12px;text-align:center">¿Quién eres?</p>
@@ -334,7 +331,7 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
 </div>
 
 <script>
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzRpHL62jtFyZzOoBjW_j2oZSSIqN3UGbHSv6IRufWyYmKFMp9gABQFphRssKTfl7X2bA/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbweJYQ0VuQC9Xbgsf9dAvPnUx8edAkCBB2UEatslKKtiMNkvyiVy_0b5Z93uA5NOmXU/exec';
 const SHEET_ID='1pEgdJ0eLkMiVvr0kI1_TZGHHcL0bi7J2PQY49SKK-wM';
 const ARCHIVE_DAYS=3;
 const AV_COLORS=[{cls:'av-blue'},{cls:'av-teal'},{cls:'av-purple'},{cls:'av-coral'},{cls:'av-amber'},{cls:'av-green'}];
@@ -362,20 +359,20 @@ function isFrac(t){return t.estado==='fraccionado'}
 
 function getBodegaLogoHTML(b,small=true){
   if(!b)return '';
-  const size=small?'font-size:9px':'font-size:11px';
   if(b.toLowerCase().includes('alopsa')){
-    return `<div class="logo-alopsa" style="${small?'transform:scale(0.75);transform-origin:left center':''}">
-      <span class="logo-alopsa-top">ASISTENCIA Y LOGÍSTICA PORTUARIA</span>
-      <span class="logo-alopsa-main">ALOPSA</span>
-      <div class="logo-alopsa-bar"></div>
-    </div>`;
+    const w=small?90:130,h=small?28:40;
+    return `<svg width="${w}" height="${h}" viewBox="0 0 130 40" xmlns="http://www.w3.org/2000/svg">
+      <text x="0" y="11" font-family="Arial,sans-serif" font-weight="600" font-size="7" fill="#555" letter-spacing="1">ASISTENCIA Y LOGÍSTICA PORTUARIA</text>
+      <text x="0" y="32" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="24" fill="#1a1a18">ALOPSA</text>
+      <rect x="0" y="36" width="130" height="2" rx="1" fill="#1a1a18"/>
+    </svg>`;
   }
   if(b.toLowerCase().includes('pahame')){
-    return `<div class="logo-pahame" style="${small?'transform:scale(0.75);transform-origin:left center':''}">
-      <span class="logo-pahame-icon">🌿</span>
-      <span class="logo-pahame-main">PAHAME</span>
-      <span class="logo-pahame-sub">COMERCIALIZADORA</span>
-    </div>`;
+    const w=small?80:110,h=small?28:38;
+    return `<svg width="${w}" height="${h}" viewBox="0 0 110 38" xmlns="http://www.w3.org/2000/svg">
+      <text x="55" y="24" font-family="Arial Black,Arial,sans-serif" font-weight="900" font-size="24" fill="#5a9e3a" text-anchor="middle">PAHAME</text>
+      <text x="55" y="34" font-family="Arial,sans-serif" font-size="7" fill="#5a9e3a" text-anchor="middle" letter-spacing="1.5">COMERCIALIZADORA</text>
+    </svg>`;
   }
   return '';
 }
