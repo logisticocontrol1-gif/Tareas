@@ -315,6 +315,8 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
       <input type="password" maxlength="1" id="pp3" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
       <span style="font-size:11px;color:#888;align-self:center;margin-left:4px">Vacío = sin cambio</span>
     </div>
+    <label class="lbl">WhatsApp (con código de país, sin +)</label>
+    <input type="tel" id="pf-phone" placeholder="Ej: 50255346409">
     <div style="display:flex;gap:8px">
       <button class="btn btn-lg" onclick="closeProfileModal()" style="flex:1">Cancelar</button>
       <button class="btn btn-primary btn-lg" onclick="saveProfile()" style="flex:1">Guardar</button>
@@ -650,7 +652,7 @@ function renderSettings(){
     <div style="display:flex;gap:6px"><button class="btn" onclick="editBodega(${i})">✏️</button><button class="btn btn-danger" onclick="deleteBodega(${i})">🗑</button></div></div>`).join('');
   document.getElementById('profile-list').innerHTML=(CFG.users||[]).map(u=>`
     <div class="settings-row">
-      <div style="display:flex;align-items:center;gap:8px"><div class="avatar ${u.av}" style="width:34px;height:34px;font-size:12px">${ini(u.name)}</div><div><div style="font-size:13px;font-weight:500">${u.name}</div><div style="font-size:11px;color:#666">${u.bodega} · PIN: ●●●●</div></div></div>
+      <div style="display:flex;align-items:center;gap:8px"><div class="avatar ${u.av}" style="width:34px;height:34px;font-size:12px">${ini(u.name)}</div><div><div style="font-size:13px;font-weight:500">${u.name}</div><div style="font-size:11px;color:#666">${u.bodega} · 📱 ${u.phone||'Sin número'}</div></div></div>
       <div style="display:flex;gap:6px"><button class="btn btn-primary" onclick="openProfileModal('${u.id}')">✏️</button><button class="btn btn-danger" onclick="deleteUser('${u.id}')">🗑</button></div>
     </div>`).join('');
 }
@@ -666,6 +668,7 @@ function openProfileModal(uid){
   const sel=document.getElementById('pf-bod');sel.innerHTML=CFG.bodegas.map(b=>`<option>${b}</option>`).join('');if(u)sel.value=u.bodega;
   document.getElementById('pf-colors').innerHTML=AV_COLORS.map(c=>`<div class="av-swatch ${c.cls}${c.cls===selAv?' selected':''}" onclick="pickAv('${c.cls}',this)"></div>`).join('');
   ['pp0','pp1','pp2','pp3'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('pf-phone').value=u?u.phone||'':""; 
   document.getElementById('modal-profile').classList.add('open');
 }
 function pickAv(cls,el){selAv=cls;document.querySelectorAll('.av-swatch').forEach(s=>s.classList.remove('selected'));el.classList.add('selected')}
@@ -675,8 +678,9 @@ async function saveProfile(){
   const uid=document.getElementById('pf-id').value;
   const newPin=['pp0','pp1','pp2','pp3'].map(id=>document.getElementById(id).value).join('');
   const bodega=document.getElementById('pf-bod').value;
-  if(uid){const idx=CFG.users.findIndex(u=>u.id===uid);if(idx>-1){CFG.users[idx].name=name;CFG.users[idx].bodega=bodega;CFG.users[idx].av=selAv;if(/^\d{4}$/.test(newPin))CFG.users[idx].pin=newPin;}}
-  else{if(!/^\d{4}$/.test(newPin)){alert('PIN debe tener 4 dígitos');return}CFG.users.push({id:'u'+Date.now(),name,bodega,av:selAv,pin:newPin});}
+  const phone=document.getElementById('pf-phone').value.trim().replace(/\D/g,'');
+  if(uid){const idx=CFG.users.findIndex(u=>u.id===uid);if(idx>-1){CFG.users[idx].name=name;CFG.users[idx].bodega=bodega;CFG.users[idx].av=selAv;CFG.users[idx].phone=phone;if(/^\d{4}$/.test(newPin))CFG.users[idx].pin=newPin;}}
+  else{if(!/^\d{4}$/.test(newPin)){alert('PIN debe tener 4 dígitos');return}CFG.users.push({id:'u'+Date.now(),name,bodega,av:selAv,pin:newPin,phone});}
   await saveConfig();closeProfileModal();renderSettings();buildUserList();
   showToast('Perfil guardado',name,'success',3000);
 }
