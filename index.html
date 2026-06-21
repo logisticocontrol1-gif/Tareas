@@ -94,6 +94,39 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
 @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
 .container{max-width:600px;margin:0 auto}
 @media(max-width:500px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+/* ── MODO OSCURO ── */
+body.dark{background:#141414;color:#e8e8e6}
+body.dark .header{background:#1e1e1e;border-color:rgba(255,255,255,0.08)}
+body.dark .task-card{background:#1e1e1e;border-color:rgba(255,255,255,0.1)}
+body.dark .task-card.fraccionado{background:#1e1a00}
+body.dark .task-card.archived{background:#181818}
+body.dark .sup-row{background:#1e1e1e;border-color:rgba(255,255,255,0.1)}
+body.dark .sup-row:hover{background:#252525}
+body.dark .sup-row.fraccionado{background:#1e1a00}
+body.dark .modal{background:#1e1e1e;color:#e8e8e6}
+body.dark input,body.dark select,body.dark textarea{background:#2a2a2a;color:#e8e8e6;border-color:rgba(255,255,255,0.15)}
+body.dark .user-btn{background:#1e1e1e;border-color:rgba(255,255,255,0.1);color:#e8e8e6}
+body.dark .user-btn:hover{background:#252525}
+body.dark .sync-bar{background:#1e1e1e;color:#aaa}
+body.dark .stat-card{background:#1e1e1e}
+body.dark .settings-row{background:#1e1e1e;border-color:rgba(255,255,255,0.1)}
+body.dark .loading-screen{background:#141414}
+body.dark .tabs{border-color:rgba(255,255,255,0.1)}
+body.dark .tab{color:#888}
+body.dark .tab.active{color:#e8e8e6;border-bottom-color:#4a8fd4}
+body.dark .count-badge{background:#2a2a2a;color:#aaa}
+body.dark .btn{color:#e8e8e6;border-color:rgba(255,255,255,0.2)}
+body.dark .btn:hover{background:#2a2a2a}
+body.dark .btn-primary{background:#1a3a5c;color:#7ab8f5;border-color:#2a5a8c}
+body.dark .btn-success{background:#1a3a1a;color:#7acc7a;border-color:#2a5a2a}
+body.dark .btn-danger{background:#3a1a1a;color:#f57a7a;border-color:#5a2a2a}
+body.dark .fraccion-detail{background:#2a2200}
+body.dark .bitacora-entry{background:#2a2a2a;color:#ccc}
+body.dark .section-title{color:#aaa}
+body.dark label.lbl{color:#aaa}
+body.dark .modal-bg{background:rgba(0,0,0,0.7)}
+body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(255,255,255,0.15)}
+
 .bitacora{margin-top:10px;border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:none}
 .bitacora.open{display:block}
 .bitacora-entry{font-size:11px;color:#555;padding:5px 8px;background:#f8f8f6;border-radius:6px;margin-bottom:5px;line-height:1.4}
@@ -195,11 +228,13 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-primary" onclick="openTaskModal(false)">+ Nueva</button>
+      <button class="btn" id="u-dark-btn" onclick="toggleDark()">🌙</button>
       <button class="btn" onclick="logout()">Salir</button>
     </div>
   </div>
   <div style="padding:0 1.25rem 1.25rem">
     <div class="sync-bar"><span id="u-sync-icon">🔄</span> <span id="u-sync-txt">Sincronizando...</span></div>
+    <div class="search-bar" style="margin-bottom:10px"><input type="text" id="u-search" placeholder="🔍 Buscar tarea..." style="margin-bottom:0" oninput="renderUser()"></div>
     <div class="tabs">
       <button class="tab active" onclick="setTab('activas',this)">Activas</button>
       <button class="tab" onclick="setTab('pendiente',this)">Pendientes</button>
@@ -225,11 +260,13 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
       <button class="btn btn-primary" onclick="openTaskModal(true)">+ Asignar</button>
       <button class="btn" onclick="showScreen('s-settings')">⚙️</button>
       <button class="btn" onclick="refreshSup()">↻</button>
+      <button class="btn" id="sup-dark-btn" onclick="toggleDark()">🌙</button>
       <button class="btn" onclick="logout()">Salir</button>
     </div>
   </div>
   <div style="padding:0 1.25rem 1.25rem">
     <div class="sync-bar"><span id="sup-sync-icon">🔄</span> <span id="sup-sync-txt">Sincronizando...</span></div>
+    <div class="search-bar" style="margin-bottom:10px"><input type="text" id="sup-search" placeholder="🔍 Buscar tarea..." style="margin-bottom:0" oninput="renderSup()"></div>
     <div class="tabs">
       <button class="tab active" onclick="setSupTab('activas',this)">Activas</button>
       <button class="tab" onclick="setSupTab('completada',this)">Completadas</button>
@@ -296,6 +333,8 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
       </div>
       <label class="lbl">Notas adicionales</label>
       <input type="text" id="f-notas" placeholder="Opcional">
+      <label class="lbl">🔁 Recurrencia</label>
+      <select id="f-recur"><option value="">Sin recurrencia</option><option value="diaria">Diaria</option><option value="semanal">Semanal</option><option value="mensual">Mensual</option></select>
       <div id="f-assign-wrap" style="display:none">
         <label class="lbl">Asignar a</label>
         <select id="f-assign"><option value="">— Sin asignar —</option></select>
@@ -469,14 +508,14 @@ async function syncTasks(scr='u'){
         const s=String(val);const m=s.match(/Date\((\d+),(\d+),(\d+)\)/);
         if(m){const d=new Date(parseInt(m[1]),parseInt(m[2]),parseInt(m[3]));return d.toISOString().slice(0,10);}
         return s;};
-      return{id:v(0),desc:v(1),prioridad:v(2),estado:v(3),fecha:v(4),reminder:v(5),userId:v(6),bodega:v(7),correo:v(8),completedAt:v(9),createdAt:v(10),archived:String(r[11]).toLowerCase()==='true',notas:v(12),fraccion:v(13),bitacora:v(16)||''};
+      return{id:v(0),desc:v(1),prioridad:v(2),estado:v(3),fecha:v(4),reminder:v(5),userId:v(6),bodega:v(7),correo:v(8),completedAt:v(9),createdAt:v(10),archived:String(r[11]).toLowerCase()==='true',notas:v(12),fraccion:v(13),recur:v(14)||'',bitacora:v(16)||''};
     }).filter(t=>t.id&&t.id!=='ID');
     allTasks=tasks;autoArchive();setSyncStatus(scr,'Sincronizado ✓');
   }catch(e){setSyncStatus(scr,'Sin conexión',false);}
 }
 
 async function writeTask(task,action){
-  const row=[task.id,task.desc,task.prioridad,task.estado,task.fecha||'',task.reminder||'',task.userId,task.bodega,task.correo||'',task.completedAt||'',task.createdAt||'',task.archived||false,task.notas||'',task.fraccion||''];
+  const row=[task.id,task.desc,task.prioridad,task.estado,task.fecha||'',task.reminder||'',task.userId,task.bodega,task.correo||'',task.completedAt||'',task.createdAt||'',task.archived||false,task.notas||'',task.fraccion||'',task.recur||''];
   await sheetsWrite({action,sheet:'Sheet1',id:task.id,row,bitacora:task.bitacora||''});
 }
 
@@ -524,7 +563,18 @@ function checkToasts(){
     }
     if(isVencida(t)){
       const key='tv_'+t.id+'_'+todayStr();
-      if(!sessionStorage.getItem(key)){showToast('Tarea vencida',t.desc,'warning',7000);sessionStorage.setItem(key,'1');}
+      if(!sessionStorage.getItem(key)){
+        showToast('Tarea vencida',t.desc,'warning',7000);
+        sessionStorage.setItem(key,'1');
+        // Notificar supervisor por WhatsApp (una vez por día)
+        const waKey='tva_'+t.id+'_'+todayStr();
+        if(!sessionStorage.getItem(waKey)){
+          const uName=currentUser?.name||'Auxiliar';
+          const msg='⚠️ Tarea vencida%0AAuxiliar: '+uName+'%0ATarea: '+t.desc.slice(0,60)+'%0AÁrea: '+t.bodega+'%0AFecha límite: '+t.fecha;
+          sheetsWrite({action:'notifySup',phone:CFG.supPhone||'50255346409',msg});
+          sessionStorage.setItem(waKey,'1');
+        }
+      }
     }
   });
   setTimeout(checkToasts,60000);
@@ -551,7 +601,7 @@ function checkUserPin(){
     document.getElementById('u-bod').textContent=currentUser.bodega;
     const av=document.getElementById('u-av');av.className='avatar '+currentUser.av;av.textContent=ini(currentUser.name);
     document.getElementById('u-bodega-logo').innerHTML=getBodegaLogoHTML(currentUser.bodega);
-    showScreen('s-user');
+    showScreen('s-user');loadDarkPref();
     syncTasks('u').then(()=>{renderUser();checkToasts()});
   }else{
     document.getElementById('upin-err').style.display='block';
@@ -568,7 +618,7 @@ function checkSupPin(){
     document.getElementById('spin-err').style.display='none';
     document.getElementById('sup-av').textContent=ini(CFG.supName||'EL');
     document.getElementById('sup-name-display').textContent=CFG.supName||'Supervisor';
-    showScreen('s-sup');
+    showScreen('s-sup');loadDarkPref();
     syncTasks('sup').then(()=>renderSup());
   }else{
     document.getElementById('spin-err').style.display='block';
@@ -614,7 +664,9 @@ function taskCard(t,showActions=true){
 }
 
 function renderUser(){
-  const my=allTasks.filter(t=>t.userId===currentUser.id);
+  if(!currentUser)return;
+  const uq=(document.getElementById('u-search')?.value||'').toLowerCase().trim();
+  const my=allTasks.filter(t=>t.userId===currentUser.id&&(!uq||t.desc.toLowerCase().includes(uq)||(t.notas||'').toLowerCase().includes(uq)));
   let filtered;
   if(currentTab==='archivo') filtered=my.filter(t=>t.archived);
   else if(currentTab==='activas') filtered=my.filter(t=>!t.archived&&t.estado!=='completada');
@@ -655,7 +707,8 @@ function renderSup(){
     <div class="stat-card"><div class="stat-num" style="color:#185FA5">${pend}</div><div class="stat-lbl">Pendientes</div></div>
     <div class="stat-card"><div class="stat-num" style="color:#854F0B">${proc}</div><div class="stat-lbl">En proceso</div></div>
     <div class="stat-card"><div class="stat-num" style="color:#A32D2D">${venc}</div><div class="stat-lbl">Vencidas</div></div>`;
-  const filtered=pool.filter(t=>(!fb||t.bodega===fb)&&(!fe||t.estado===fe)&&(!fp||t.prioridad===fp));
+  const sq=(document.getElementById('sup-search')?.value||'').toLowerCase().trim();
+  const filtered=pool.filter(t=>(!fb||t.bodega===fb)&&(!fe||t.estado===fe)&&(!fp||t.prioridad===fp)&&(!sq||(t.desc||'').toLowerCase().includes(sq)||(t.notas||'').toLowerCase().includes(sq)));
   const grouped={};filtered.forEach(t=>{if(!grouped[t.bodega])grouped[t.bodega]=[];grouped[t.bodega].push(t)});
   const activeBodegas=fb?[fb]:bodegas;
   document.getElementById('sup-tasks').innerHTML=activeBodegas.map(b=>{
@@ -750,7 +803,7 @@ async function saveSupProfile(){
 function openTaskModal(sup=false){
   editingId=null;
   document.getElementById('modal-task-title').textContent=sup?'Asignar tarea':'Nueva tarea';
-  ['f-desc','f-fecha','f-rec-date','f-rec-time','f-notas','f-fraccion'].forEach(id=>document.getElementById(id).value='');editingBitacora=[];document.getElementById('f-bitacora-wrap').style.display='none';
+  ['f-desc','f-fecha','f-rec-date','f-rec-time','f-notas','f-fraccion'].forEach(id=>document.getElementById(id).value='');document.getElementById('f-recur').value='';editingBitacora=[];document.getElementById('f-bitacora-wrap').style.display='none';
   document.getElementById('f-pri').value='media';document.getElementById('f-est').value='pendiente';
   document.getElementById('f-fraccion-wrap').style.display='none';
   const aw=document.getElementById('f-assign-wrap');
@@ -774,7 +827,7 @@ function fillTaskModal(t,sup=false){
   const rem=t.reminder||'';
   document.getElementById('f-rec-date').value=rem.slice(0,10);
   document.getElementById('f-rec-time').value=rem.length>=16?rem.slice(11,16):'';
-  document.getElementById('f-notas').value=t.notas||'';editingBitacora=parseBitacora(t.bitacora||'');document.getElementById('f-bitacora-wrap').style.display='block';renderBitacoraList(editingBitacora,'f-bitacora-list');
+  document.getElementById('f-notas').value=t.notas||'';document.getElementById('f-recur').value=t.recur||'';editingBitacora=parseBitacora(t.bitacora||'');document.getElementById('f-bitacora-wrap').style.display='block';renderBitacoraList(editingBitacora,'f-bitacora-list');
   const aw=document.getElementById('f-assign-wrap');
   if(sup){aw.style.display='block';const s=document.getElementById('f-assign');s.innerHTML='<option value="">— Sin asignar —</option>'+CFG.users.map(u=>`<option value="${u.id}">${u.name} — ${u.bodega}</option>`).join('');s.value=t.userId||'';}
   else aw.style.display='none';
@@ -787,6 +840,38 @@ function editTaskSup(id){const t=allTasks.find(t=>t.id===id);if(t)fillTaskModal(
 function closeTaskModal(){document.getElementById('modal-task').classList.remove('open');editingId=null}
 
 
+
+
+// ── MODO OSCURO ──
+function applyDark(on){
+  document.body.classList.toggle('dark',on);
+  const btn1=document.getElementById('u-dark-btn');
+  const btn2=document.getElementById('sup-dark-btn');
+  if(btn1)btn1.textContent=on?'☀️':'🌙';
+  if(btn2)btn2.textContent=on?'☀️':'🌙';
+}
+function toggleDark(){
+  const isDark=document.body.classList.contains('dark');
+  applyDark(!isDark);
+  // Guardar preferencia por perfil
+  const key='dark_'+(currentUser?.id||'sup');
+  localStorage.setItem(key,(!isDark)?'1':'0');
+}
+function loadDarkPref(){
+  const key='dark_'+(currentUser?.id||'sup');
+  const pref=localStorage.getItem(key);
+  applyDark(pref==='1');
+}
+
+// ── RECURRENCIA ──
+function nextRecurDate(fechaStr,recur){
+  if(!fechaStr)return '';
+  const d=new Date(fechaStr+'T12:00:00');
+  if(recur==='diaria')d.setDate(d.getDate()+1);
+  else if(recur==='semanal')d.setDate(d.getDate()+7);
+  else if(recur==='mensual')d.setMonth(d.getMonth()+1);
+  return d.toISOString().slice(0,10);
+}
 
 // ── BITÁCORA ──
 let editingBitacora=[];
@@ -893,6 +978,7 @@ async function saveTask(){
     completedAt:estado==='completada'?(existing?.completedAt||new Date().toISOString()):'',
     archived:existing?.archived||false,
     fraccion:document.getElementById('f-fraccion').value,
+    recur:document.getElementById('f-recur').value,
     bitacora:JSON.stringify(editingBitacora)
   };
   const isNew=!editingId;
@@ -918,6 +1004,16 @@ async function cycleStatus(id){
   if(t.estado==='completada'){
     const u=CFG.users.find(x=>x.id===t.userId);
     await notifySupCompletion(t, u?u.name:t.userId);
+    // Regenerar si es recurrente
+    if(t.recur){
+      const next=nextRecurDate(t.fecha,t.recur);
+      const newTask={...t,id:'t'+Date.now(),estado:'pendiente',completedAt:'',archived:false,
+        createdAt:new Date().toISOString(),fecha:next,
+        reminder:next?(next+(t.reminder&&t.reminder.includes('T')?t.reminder.slice(10):'')):'',
+        bitacora:JSON.stringify([{autor:'Sistema',fecha:new Date().toLocaleString('es-GT'),texto:'Tarea recurrente generada automáticamente ('+t.recur+')'}])};
+      await writeTask(newTask,'append');allTasks.push(newTask);
+      showToast('Tarea recurrente','Nueva tarea generada ('+t.recur+')','info',4000);
+    }
   }
   autoArchive();renderUser();
 }
