@@ -330,6 +330,8 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
     <h3>Mi perfil</h3>
     <label class="lbl">Nombre</label><input type="text" id="sp-name">
     <label class="lbl">Cargo</label><input type="text" id="sp-role">
+    <label class="lbl">WhatsApp supervisor (con código de país, sin +)</label>
+    <input type="tel" id="sp-phone" placeholder="Ej: 50255346409">
     <label class="lbl">Nuevo PIN (vacío = sin cambio)</label>
     <div style="display:flex;gap:6px;margin-bottom:10px">
       <input type="password" maxlength="1" id="spp0" inputmode="numeric" style="width:48px;height:48px;text-align:center;font-size:18px;padding:0;margin-bottom:0">
@@ -354,7 +356,7 @@ const AV_COLORS=[{cls:'av-blue'},{cls:'av-teal'},{cls:'av-purple'},{cls:'av-cora
 
 // DEFAULT CONFIG — used only if Sheets Config is empty
 const DEFAULT_CFG={
-  supName:'Everth Leal',supRole:'Control Logístico',supPin:'1234',
+  supName:'Everth Leal',supRole:'Control Logístico',supPin:'1234',supPhone:'50255346409',
   bodegas:['ALOPSA 1','ALOPSA 2','ALOPSA 3','Bodega Pahame'],
   users:[
     {id:'u1',name:'Lourdes Borja',bodega:'ALOPSA 1',av:'av-blue',pin:'1111'},
@@ -396,13 +398,14 @@ async function loadConfig(){
     CFG.supName=map['supName']||DEFAULT_CFG.supName;
     CFG.supRole=map['supRole']||DEFAULT_CFG.supRole;
     CFG.supPin=map['supPin']||DEFAULT_CFG.supPin;
+    CFG.supPhone=map['supPhone']||DEFAULT_CFG.supPhone||'';
     CFG.bodegas=map['bodegas']?JSON.parse(map['bodegas']):DEFAULT_CFG.bodegas;
     CFG.users=map['users']?JSON.parse(map['users']):DEFAULT_CFG.users;
   }catch(e){CFG=Object.assign({},DEFAULT_CFG);}
 }
 
 async function pushConfigToSheets(cfg){
-  const keys=['supName','supRole','supPin','bodegas','users'];
+  const keys=['supName','supRole','supPin','supPhone','bodegas','users'];
   for(const key of keys){
     const value=typeof cfg[key]==='object'?JSON.stringify(cfg[key]):cfg[key];
     await sheetsWrite({action:'set',sheet:'Config',key,value});
@@ -686,10 +689,11 @@ async function saveProfile(){
 }
 async function deleteUser(uid){if(!confirm('¿Eliminar?'))return;CFG.users=CFG.users.filter(u=>u.id!==uid);await saveConfig();renderSettings();buildUserList()}
 
-function openSupProfileModal(){document.getElementById('sp-name').value=CFG.supName||'';document.getElementById('sp-role').value=CFG.supRole||'';['spp0','spp1','spp2','spp3'].forEach(id=>document.getElementById(id).value='');document.getElementById('modal-sup-profile').classList.add('open')}
+function openSupProfileModal(){document.getElementById('sp-name').value=CFG.supName||'';document.getElementById('sp-role').value=CFG.supRole||'';document.getElementById('sp-phone').value=CFG.supPhone||'';['spp0','spp1','spp2','spp3'].forEach(id=>document.getElementById(id).value='');document.getElementById('modal-sup-profile').classList.add('open')}
 async function saveSupProfile(){
   const n=document.getElementById('sp-name').value.trim();if(n)CFG.supName=n;
   CFG.supRole=document.getElementById('sp-role').value.trim();
+  const sp=document.getElementById('sp-phone').value.trim().replace(/[^0-9]/g,'');if(sp)CFG.supPhone=sp;
   const np=['spp0','spp1','spp2','spp3'].map(id=>document.getElementById(id).value).join('');
   if(/^\d{4}$/.test(np))CFG.supPin=np;
   await saveConfig();document.getElementById('modal-sup-profile').classList.remove('open');
@@ -739,6 +743,23 @@ function editTask(id){const t=allTasks.find(t=>t.id===id);if(t)fillTaskModal(t,f
 function editTaskSup(id){const t=allTasks.find(t=>t.id===id);if(t)fillTaskModal(t,true)}
 function closeTaskModal(){document.getElementById('modal-task').classList.remove('open');editingId=null}
 
+
+// ── NOTIFICACIÓN SUPERVISOR AL COMPLETAR ──
+async function notifySupCompletion(task, userName) {
+  try {
+    const phone = CFG.supPhone || '50255346409';
+    if (!phone) return;
+    const now = new Date();
+    const hora = now.toLocaleString('es-GT', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const msg = '✅ Tarea completada%0A' +
+      'Auxiliar: ' + userName + '%0A' +
+      'Tarea: ' + task.desc.slice(0,60) + '%0A' +
+      'Bodega: ' + task.bodega + '%0A' +
+      'Hora: ' + hora;
+    await sheetsWrite({action:'notifySup', phone, msg});
+  } catch(e) {}
+}
+
 async function saveTask(){
   const desc=document.getElementById('f-desc').value.trim();if(!desc)return;
   document.getElementById('modal-form').style.display='none';document.getElementById('modal-saving').style.display='block';
@@ -773,7 +794,12 @@ async function cycleStatus(id){
   t.estado=t.estado==='pendiente'?'proceso':(t.estado==='proceso'||t.estado==='fraccionado')?'completada':'pendiente';
   if(t.estado==='completada')t.completedAt=new Date().toISOString();else t.completedAt='';
   t.archived=false;
-  await writeTask(t,'update');autoArchive();renderUser();
+  await writeTask(t,'update');
+  if(t.estado==='completada'){
+    const u=CFG.users.find(x=>x.id===t.userId);
+    await notifySupCompletion(t, u?u.name:t.userId);
+  }
+  autoArchive();renderUser();
 }
 
 async function delTask(id,sup=false){
