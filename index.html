@@ -94,6 +94,16 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
 @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
 .container{max-width:600px;margin:0 auto}
 @media(max-width:500px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.bitacora{margin-top:10px;border-top:0.5px solid rgba(0,0,0,0.08);padding-top:8px;display:none}
+.bitacora.open{display:block}
+.bitacora-entry{font-size:11px;color:#555;padding:5px 8px;background:#f8f8f6;border-radius:6px;margin-bottom:5px;line-height:1.4}
+.bitacora-entry .bit-meta{font-size:10px;color:#aaa;margin-bottom:2px}
+.bitacora-add{display:flex;gap:6px;margin-top:6px}
+.bitacora-add input{margin-bottom:0;font-size:12px;flex:1}
+.sup-row{cursor:pointer}
+.sup-detail{display:none;margin-top:8px;padding-top:8px;border-top:0.5px solid rgba(0,0,0,0.08);font-size:12px;color:#555;line-height:1.6}
+.sup-detail.open{display:block}
+
 </style>
 </head>
 <body>
@@ -290,6 +300,14 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
         <label class="lbl">Asignar a</label>
         <select id="f-assign"><option value="">— Sin asignar —</option></select>
       </div>
+            <div id="f-bitacora-wrap" style="display:none;margin-top:8px;border-top:0.5px solid rgba(0,0,0,0.1);padding-top:10px">
+        <label class="lbl">💬 Observaciones / Bitácora</label>
+        <div id="f-bitacora-list" style="max-height:150px;overflow-y:auto;margin-bottom:6px"></div>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="f-bitacora-new" placeholder="Nueva observación..." style="margin-bottom:0;flex:1">
+          <button class="btn btn-primary" onclick="addBitacoraEntry()" style="white-space:nowrap;flex-shrink:0">+ Agregar</button>
+        </div>
+      </div>
       <div style="display:flex;gap:8px;margin-top:8px">
         <button class="btn btn-lg" onclick="closeTaskModal()" style="flex:1">Cancelar</button>
         <button class="btn btn-primary btn-lg" onclick="saveTask()" style="flex:1">Guardar</button>
@@ -342,6 +360,31 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
     <div style="display:flex;gap:8px">
       <button class="btn btn-lg" onclick="document.getElementById('modal-sup-profile').classList.remove('open')" style="flex:1">Cancelar</button>
       <button class="btn btn-primary btn-lg" onclick="saveSupProfile()" style="flex:1">Guardar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- MODAL DETALLE TAREA (supervisor) -->
+<div class="modal-bg" id="modal-detalle">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h3 id="det-title" style="margin-bottom:0;flex:1;padding-right:8px"></h3>
+      <button class="btn" onclick="document.getElementById('modal-detalle').classList.remove('open')">✕</button>
+    </div>
+    <div id="det-badges" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"></div>
+    <div id="det-meta" style="font-size:12px;color:#666;line-height:1.8;margin-bottom:10px"></div>
+    <div id="det-notas" style="display:none;background:#f8f8f6;border-radius:8px;padding:8px 10px;font-size:12px;color:#555;margin-bottom:10px"></div>
+    <div id="det-fraccion" style="display:none;background:#FFF8DC;border-radius:8px;padding:8px 10px;font-size:12px;color:#7d5a00;margin-bottom:10px"></div>
+    <div style="font-size:12px;font-weight:500;color:#1a3a5c;margin-bottom:6px">💬 Bitácora de observaciones</div>
+    <div id="det-bitacora" style="max-height:200px;overflow-y:auto;margin-bottom:10px"></div>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="det-bitacora-new" placeholder="Agregar observación como supervisor..." style="margin-bottom:0;flex:1;font-size:12px">
+      <button class="btn btn-primary" onclick="addDetBitacora()" style="white-space:nowrap;flex-shrink:0">+ Agregar</button>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary btn-lg" onclick="editTaskSupFromDet()" style="flex:1">✏️ Editar</button>
+      <button class="btn btn-danger btn-lg" onclick="delTaskFromDet()" style="flex:1">🗑 Eliminar</button>
     </div>
   </div>
 </div>
@@ -426,7 +469,7 @@ async function syncTasks(scr='u'){
         const s=String(val);const m=s.match(/Date\((\d+),(\d+),(\d+)\)/);
         if(m){const d=new Date(parseInt(m[1]),parseInt(m[2]),parseInt(m[3]));return d.toISOString().slice(0,10);}
         return s;};
-      return{id:v(0),desc:v(1),prioridad:v(2),estado:v(3),fecha:v(4),reminder:v(5),userId:v(6),bodega:v(7),correo:v(8),completedAt:v(9),createdAt:v(10),archived:String(r[11]).toLowerCase()==='true',notas:v(12),fraccion:v(13)};
+      return{id:v(0),desc:v(1),prioridad:v(2),estado:v(3),fecha:v(4),reminder:v(5),userId:v(6),bodega:v(7),correo:v(8),completedAt:v(9),createdAt:v(10),archived:String(r[11]).toLowerCase()==='true',notas:v(12),fraccion:v(13),bitacora:v(16)||''};
     }).filter(t=>t.id&&t.id!=='ID');
     allTasks=tasks;autoArchive();setSyncStatus(scr,'Sincronizado ✓');
   }catch(e){setSyncStatus(scr,'Sin conexión',false);}
@@ -434,7 +477,7 @@ async function syncTasks(scr='u'){
 
 async function writeTask(task,action){
   const row=[task.id,task.desc,task.prioridad,task.estado,task.fecha||'',task.reminder||'',task.userId,task.bodega,task.correo||'',task.completedAt||'',task.createdAt||'',task.archived||false,task.notas||'',task.fraccion||''];
-  await sheetsWrite({action,sheet:'Sheet1',id:task.id,row});
+  await sheetsWrite({action,sheet:'Sheet1',id:task.id,row,bitacora:task.bitacora||''});
 }
 
 // ── UTILS ──
@@ -622,7 +665,7 @@ function renderSup(){
     return`<div class="bodega-section"><div class="bodega-title">${logo||'🏭'} ${b} <span class="count-badge">${bt.length}</span></div>${bt.map(t=>{
       const u=USERS.find(x=>x.id===t.userId),v=isVencida(t),fr=isFrac(t);
       const bs=fr?'fraccionado':(v?'vencida':t.estado),bl=fr?'💰 Fraccionado':(v?'vencida':t.estado);
-      return`<div class="sup-row${fr?' fraccionado':''}">
+      return`<div class="sup-row${fr?' fraccionado':''}" onclick="openTaskDetail('${t.id}')">
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.desc}</div>
           ${fr&&t.fraccion?`<div style="font-size:11px;color:#7d5a00;margin-top:2px">💰 ${t.fraccion}</div>`:''}
@@ -707,7 +750,7 @@ async function saveSupProfile(){
 function openTaskModal(sup=false){
   editingId=null;
   document.getElementById('modal-task-title').textContent=sup?'Asignar tarea':'Nueva tarea';
-  ['f-desc','f-fecha','f-rec-date','f-rec-time','f-notas','f-fraccion'].forEach(id=>document.getElementById(id).value='');
+  ['f-desc','f-fecha','f-rec-date','f-rec-time','f-notas','f-fraccion'].forEach(id=>document.getElementById(id).value='');editingBitacora=[];document.getElementById('f-bitacora-wrap').style.display='none';
   document.getElementById('f-pri').value='media';document.getElementById('f-est').value='pendiente';
   document.getElementById('f-fraccion-wrap').style.display='none';
   const aw=document.getElementById('f-assign-wrap');
@@ -731,7 +774,7 @@ function fillTaskModal(t,sup=false){
   const rem=t.reminder||'';
   document.getElementById('f-rec-date').value=rem.slice(0,10);
   document.getElementById('f-rec-time').value=rem.length>=16?rem.slice(11,16):'';
-  document.getElementById('f-notas').value=t.notas||'';
+  document.getElementById('f-notas').value=t.notas||'';editingBitacora=parseBitacora(t.bitacora||'');document.getElementById('f-bitacora-wrap').style.display='block';renderBitacoraList(editingBitacora,'f-bitacora-list');
   const aw=document.getElementById('f-assign-wrap');
   if(sup){aw.style.display='block';const s=document.getElementById('f-assign');s.innerHTML='<option value="">— Sin asignar —</option>'+CFG.users.map(u=>`<option value="${u.id}">${u.name} — ${u.bodega}</option>`).join('');s.value=t.userId||'';}
   else aw.style.display='none';
@@ -743,6 +786,75 @@ function editTask(id){const t=allTasks.find(t=>t.id===id);if(t)fillTaskModal(t,f
 function editTaskSup(id){const t=allTasks.find(t=>t.id===id);if(t)fillTaskModal(t,true)}
 function closeTaskModal(){document.getElementById('modal-task').classList.remove('open');editingId=null}
 
+
+
+// ── BITÁCORA ──
+let editingBitacora=[];
+function parseBitacora(s){try{return s?JSON.parse(s):[]}catch(e){return[]}}
+function renderBitacoraList(entries,containerId){
+  const c=document.getElementById(containerId);if(!c)return;
+  if(!entries.length){c.innerHTML='<p style="font-size:11px;color:#aaa;text-align:center;padding:8px">Sin observaciones aún</p>';return;}
+  c.innerHTML=entries.map(e=>`<div class="bitacora-entry"><div class="bit-meta">${e.autor||'?'} · ${e.fecha||''}</div>${e.texto}</div>`).reverse().join('');
+}
+function addBitacoraEntry(){
+  const inp=document.getElementById('f-bitacora-new');const txt=inp.value.trim();if(!txt)return;
+  const autor=isSup?(CFG.supName||'Supervisor'):(currentUser?.name||'Auxiliar');
+  const fecha=new Date().toLocaleString('es-GT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  editingBitacora.push({autor,fecha,texto:txt});
+  renderBitacoraList(editingBitacora,'f-bitacora-list');
+  inp.value='';
+}
+
+// Modal detalle supervisor
+let detTaskId=null;
+function openTaskDetail(id){
+  const t=allTasks.find(x=>x.id===id);if(!t)return;
+  detTaskId=id;
+  const u=CFG.users.find(x=>x.id===t.userId);
+  const v=isVencida(t),fr=isFrac(t);
+  const bs=fr?'fraccionado':(v?'vencida':t.estado),bl=fr?'💰 Fraccionado':(v?'⚠️ Vencida':t.estado);
+  document.getElementById('det-title').textContent=t.desc;
+  document.getElementById('det-badges').innerHTML=
+    `<span class="badge badge-${bs}">${bl}</span><span class="badge badge-${t.prioridad}">🚩 ${t.prioridad}</span>`;
+  document.getElementById('det-meta').innerHTML=
+    `${u?`<b>Auxiliar:</b> ${u.name}<br>`:''}${t.bodega?`<b>Área:</b> ${t.bodega}<br>`:''}${t.fecha?`<b>Fecha límite:</b> ${fmtDate(t.fecha)}<br>`:''}${t.reminder?`<b>Recordatorio:</b> ${fmtDate(t.reminder)}<br>`:''}${t.createdAt?`<b>Registrada:</b> ${fmtDate(t.createdAt)}<br>`:''}`;
+  const nd=document.getElementById('det-notas');
+  if(t.notas){nd.style.display='block';nd.innerHTML='<b>📝 Notas:</b> '+t.notas;}else nd.style.display='none';
+  const fd=document.getElementById('det-fraccion');
+  if(fr&&t.fraccion){fd.style.display='block';fd.innerHTML='<b>💰 Fraccionado:</b> '+t.fraccion;}else fd.style.display='none';
+  const bits=parseBitacora(t.bitacora);
+  renderBitacoraList(bits,'det-bitacora');
+  document.getElementById('det-bitacora-new').value='';
+  document.getElementById('modal-detalle').classList.add('open');
+}
+async function addDetBitacora(){
+  const inp=document.getElementById('det-bitacora-new');const txt=inp.value.trim();if(!txt||!detTaskId)return;
+  const t=allTasks.find(x=>x.id===detTaskId);if(!t)return;
+  const autor=CFG.supName||'Supervisor';
+  const fecha=new Date().toLocaleString('es-GT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const bits=parseBitacora(t.bitacora);
+  bits.push({autor,fecha,texto:txt});
+  t.bitacora=JSON.stringify(bits);
+  await sheetsWrite({action:'updateBitacora',sheet:'Sheet1',id:t.id,bitacora:t.bitacora});
+  renderBitacoraList(bits,'det-bitacora');
+  inp.value='';
+  showToast('Observación guardada',txt.slice(0,40),'success',2500);
+}
+function editTaskSupFromDet(){document.getElementById('modal-detalle').classList.remove('open');if(detTaskId)editTaskSup(detTaskId)}
+function delTaskFromDet(){document.getElementById('modal-detalle').classList.remove('open');if(detTaskId)delTask(detTaskId,true)}
+
+// Notificación al auxiliar cuando sup asigna/edita
+async function notifyAuxiliar(task, isNew){
+  try{
+    const u=CFG.users.find(x=>x.id===task.userId);
+    if(!u||!u.phone)return;
+    const now=new Date();
+    const hora=now.toLocaleString('es-GT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const tipo=isNew?'📋 Nueva tarea asignada':'✏️ Tarea actualizada';
+    const msg=tipo+'%0ATarea: '+task.desc.slice(0,60)+'%0AEstado: '+task.estado+'%0A'+(task.fecha?'Fecha límite: '+task.fecha+'%0A':'')+'Hora: '+hora;
+    await sheetsWrite({action:'notifyAux',phone:u.phone,msg});
+  }catch(e){}
+}
 
 // ── NOTIFICACIÓN SUPERVISOR AL COMPLETAR ──
 async function notifySupCompletion(task, userName) {
@@ -780,10 +892,13 @@ async function saveTask(){
     createdAt:existing?.createdAt||new Date().toISOString(),
     completedAt:estado==='completada'?(existing?.completedAt||new Date().toISOString()):'',
     archived:existing?.archived||false,
-    fraccion:document.getElementById('f-fraccion').value
+    fraccion:document.getElementById('f-fraccion').value,
+    bitacora:JSON.stringify(editingBitacora)
   };
-  await writeTask(task,editingId?'update':'append');
-  if(editingId){const idx=allTasks.findIndex(t=>t.id===editingId);if(idx>-1)allTasks[idx]=task;}else allTasks.push(task);
+  const isNew=!editingId;
+  await writeTask(task,isNew?'append':'update');
+  if(!isNew){const idx=allTasks.findIndex(t=>t.id===editingId);if(idx>-1)allTasks[idx]=task;}else allTasks.push(task);
+  if(isSup)await notifyAuxiliar(task,isNew);
   autoArchive();closeTaskModal();
   showToast('Tarea guardada',desc.slice(0,50),'success',3000);
   if(isSup)renderSup();else renderUser();
@@ -793,6 +908,11 @@ async function cycleStatus(id){
   const t=allTasks.find(t=>t.id===id);if(!t)return;
   t.estado=t.estado==='pendiente'?'proceso':(t.estado==='proceso'||t.estado==='fraccionado')?'completada':'pendiente';
   if(t.estado==='completada')t.completedAt=new Date().toISOString();else t.completedAt='';
+  const autor=currentUser?.name||'Auxiliar';
+  const fecha=new Date().toLocaleString('es-GT',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const bits=parseBitacora(t.bitacora||'');
+  bits.push({autor,fecha,texto:'Estado cambiado a: '+t.estado});
+  t.bitacora=JSON.stringify(bits);
   t.archived=false;
   await writeTask(t,'update');
   if(t.estado==='completada'){
