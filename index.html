@@ -94,6 +94,16 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
 @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
 .container{max-width:600px;margin:0 auto}
 @media(max-width:500px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+
+.veh-card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;display:flex;align-items:center;gap:12px}
+.veh-plate{background:#1a3a5c;color:#fff;font-size:15px;font-weight:700;padding:6px 14px;border-radius:8px;letter-spacing:2px;min-width:90px;text-align:center;flex-shrink:0}
+.veh-info{flex:1;min-width:0}
+.veh-tipo{font-size:12px;color:#666;margin-bottom:2px}
+.veh-asig{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.veh-emp{font-size:11px;color:#aaa;margin-top:2px}
+body.dark .veh-card{background:#1e1e1e;border-color:rgba(255,255,255,0.1)}
+body.dark .veh-plate{background:#2a5a8c}
+body.dark .veh-tipo,.veh-emp{color:#888}
 /* ── MODO OSCURO ── */
 body.dark{background:#141414;color:#e8e8e6}
 body.dark .header{background:#1e1e1e;border-color:rgba(255,255,255,0.08)}
@@ -228,6 +238,7 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-primary" onclick="openTaskModal(false)">+ Nueva</button>
+      <button class="btn" id="u-veh-btn" onclick="showScreen('s-vehiculos')" style="display:none">🚛</button>
       <button class="btn" id="u-dark-btn" onclick="toggleDark()">🌙</button>
       <button class="btn" onclick="logout()">Salir</button>
     </div>
@@ -258,6 +269,7 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
       <button class="btn btn-primary" onclick="openTaskModal(true)">+ Asignar</button>
+      <button class="btn" onclick="showScreen('s-vehiculos')">🚛</button>
       <button class="btn" onclick="showScreen('s-settings')">⚙️</button>
       <button class="btn" onclick="refreshSup()">↻</button>
       <button class="btn" id="sup-dark-btn" onclick="toggleDark()">🌙</button>
@@ -424,6 +436,56 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
     <div style="display:flex;gap:8px;margin-top:12px">
       <button class="btn btn-primary btn-lg" onclick="editTaskSupFromDet()" style="flex:1">✏️ Editar</button>
       <button class="btn btn-danger btn-lg" onclick="delTaskFromDet()" style="flex:1">🗑 Eliminar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- VISTA VEHÍCULOS -->
+<div id="s-vehiculos" class="screen">
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:8px">
+      <div style="font-size:22px">🚛</div>
+      <div>
+        <div style="font-size:14px;font-weight:500">Vehículos</div>
+        <div style="font-size:11px;color:#666">Control de flota</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-primary" onclick="openVehModal(null)">+ Agregar</button>
+      <button class="btn" onclick="volver()">← Volver</button>
+    </div>
+  </div>
+  <div style="padding:0 1.25rem 1.25rem">
+    <div class="search-bar" style="margin-bottom:10px">
+      <input type="text" id="veh-search" placeholder="🔍 Buscar placa o conductor..." style="margin-bottom:0" oninput="renderVehiculos()">
+    </div>
+    <div id="veh-list"></div>
+  </div>
+</div>
+
+<!-- MODAL VEHÍCULO -->
+<div class="modal-bg" id="modal-veh">
+  <div class="modal">
+    <h3 id="modal-veh-title">Nuevo vehículo</h3>
+    <label class="lbl">🔢 Placa</label>
+    <input type="text" id="vf-placa" placeholder="Ej: P-123ABC" style="text-transform:uppercase">
+    <label class="lbl">🚗 Tipo de vehículo</label>
+    <select id="vf-tipo">
+      <option value="Camión">Camión</option>
+      <option value="Camioneta">Camioneta</option>
+      <option value="Panel">Panel</option>
+      <option value="Montacargas">Montacargas</option>
+      <option value="Cabezal">Cabezal</option>
+      <option value="Otro">Otro</option>
+    </select>
+    <label class="lbl">👤 Asignado a</label>
+    <input type="text" id="vf-asig" placeholder="Nombre del conductor">
+    <label class="lbl">🏢 Empresa (opcional)</label>
+    <input type="text" id="vf-emp" placeholder="Ej: ALOPSA, SWISSTEC...">
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button class="btn btn-lg" onclick="closeVehModal()" style="flex:1">Cancelar</button>
+      <button class="btn btn-primary btn-lg" onclick="saveVehiculo()" style="flex:1">Guardar</button>
     </div>
   </div>
 </div>
@@ -601,7 +663,9 @@ function checkUserPin(){
     document.getElementById('u-bod').textContent=currentUser.bodega;
     const av=document.getElementById('u-av');av.className='avatar '+currentUser.av;av.textContent=ini(currentUser.name);
     document.getElementById('u-bodega-logo').innerHTML=getBodegaLogoHTML(currentUser.bodega);
-    showScreen('s-user');loadDarkPref();
+    showScreen('s-user');loadDarkPref();prevScreen='s-user';
+    const vb=document.getElementById('u-veh-btn');
+    if(vb)vb.style.display=(currentUser?.bodega||'').toLowerCase().includes('transport')?'':'none';
     syncTasks('u').then(()=>{renderUser();checkToasts()});
   }else{
     document.getElementById('upin-err').style.display='block';
@@ -618,7 +682,7 @@ function checkSupPin(){
     document.getElementById('spin-err').style.display='none';
     document.getElementById('sup-av').textContent=ini(CFG.supName||'EL');
     document.getElementById('sup-name-display').textContent=CFG.supName||'Supervisor';
-    showScreen('s-sup');loadDarkPref();
+    showScreen('s-sup');loadDarkPref();prevScreen='s-sup';
     syncTasks('sup').then(()=>renderSup());
   }else{
     document.getElementById('spin-err').style.display='block';
@@ -871,6 +935,86 @@ function nextRecurDate(fechaStr,recur){
   else if(recur==='semanal')d.setDate(d.getDate()+7);
   else if(recur==='mensual')d.setMonth(d.getMonth()+1);
   return d.toISOString().slice(0,10);
+}
+
+
+// ── VEHÍCULOS ──
+let allVehiculos=[], editingVehId=null, prevScreen='s-user';
+
+function volver(){
+  showScreen(prevScreen);
+  if(prevScreen==='s-sup')renderSup();
+  else renderUser();
+}
+
+async function loadVehiculos(){
+  try{
+    const rows=await sheetsRead('Vehiculos');
+    allVehiculos=rows.map(r=>({
+      id:String(r[0]||''),placa:String(r[1]||''),tipo:String(r[2]||''),
+      asig:String(r[3]||''),emp:String(r[4]||'')
+    })).filter(v=>v.id);
+  }catch(e){allVehiculos=[];}
+}
+
+function renderVehiculos(){
+  const q=(document.getElementById('veh-search')?.value||'').toLowerCase().trim();
+  const list=allVehiculos.filter(v=>!q||v.placa.toLowerCase().includes(q)||v.asig.toLowerCase().includes(q)||v.emp.toLowerCase().includes(q));
+  const el=document.getElementById('veh-list');
+  if(!list.length){el.innerHTML='<div class="empty-state">🚛<br><br>Sin vehículos registrados</div>';return;}
+  el.innerHTML=list.map(v=>`
+    <div class="veh-card">
+      <div class="veh-plate">${v.placa}</div>
+      <div class="veh-info">
+        <div class="veh-tipo">${v.tipo}</div>
+        <div class="veh-asig">👤 ${v.asig||'Sin asignar'}</div>
+        ${v.emp?`<div class="veh-emp">🏢 ${v.emp}</div>`:''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button class="btn btn-primary" onclick="openVehModal('${v.id}')">✏️</button>
+        <button class="btn btn-danger" onclick="delVehiculo('${v.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+function openVehModal(id){
+  editingVehId=id;
+  const v=id?allVehiculos.find(x=>x.id===id):null;
+  document.getElementById('modal-veh-title').textContent=id?'Editar vehículo':'Nuevo vehículo';
+  document.getElementById('vf-placa').value=v?.placa||'';
+  document.getElementById('vf-tipo').value=v?.tipo||'Camión';
+  document.getElementById('vf-asig').value=v?.asig||'';
+  document.getElementById('vf-emp').value=v?.emp||'';
+  document.getElementById('modal-veh').classList.add('open');
+}
+
+function closeVehModal(){
+  document.getElementById('modal-veh').classList.remove('open');
+}
+
+async function saveVehiculo(){
+  const placa=document.getElementById('vf-placa').value.trim().toUpperCase();
+  if(!placa){alert('La placa es requerida');return;}
+  const veh={
+    id:editingVehId||'v'+Date.now(),
+    placa,
+    tipo:document.getElementById('vf-tipo').value,
+    asig:document.getElementById('vf-asig').value.trim(),
+    emp:document.getElementById('vf-emp').value.trim()
+  };
+  await sheetsWrite({action:editingVehId?'updateVeh':'appendVeh',sheet:'Vehiculos',veh});
+  if(editingVehId){const idx=allVehiculos.findIndex(x=>x.id===editingVehId);if(idx>-1)allVehiculos[idx]=veh;}
+  else allVehiculos.push(veh);
+  closeVehModal();
+  renderVehiculos();
+  showToast('Vehículo guardado',placa,'success',2500);
+}
+
+async function delVehiculo(id){
+  if(!confirm('¿Eliminar este vehículo?'))return;
+  await sheetsWrite({action:'deleteVeh',sheet:'Vehiculos',id});
+  allVehiculos=allVehiculos.filter(v=>v.id!==id);
+  renderVehiculos();
 }
 
 // ── BITÁCORA ──
