@@ -471,7 +471,7 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
     <label class="lbl">🔢 Placa</label>
     <input type="text" id="vf-placa" placeholder="Ej: P-123ABC" style="text-transform:uppercase">
     <label class="lbl">🚗 Tipo de vehículo</label>
-    <select id="vf-tipo">
+    <select id="vf-tipo" onchange="toggleVehOtro()">
       <option value="Camión">Camión</option>
       <option value="Camioneta">Camioneta</option>
       <option value="Panel">Panel</option>
@@ -479,6 +479,9 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
       <option value="Cabezal">Cabezal</option>
       <option value="Otro">Otro</option>
     </select>
+    <div id="vf-otro-wrap" style="display:none">
+      <input type="text" id="vf-otro" placeholder="Especifica el tipo de vehículo">
+    </div>
     <label class="lbl">👤 Asignado a</label>
     <input type="text" id="vf-asig" placeholder="Nombre del conductor">
     <label class="lbl">🏢 Empresa (opcional)</label>
@@ -493,7 +496,7 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
 </div><!-- /app -->
 
 <script>
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbzrZgLMgxSbA7omutjC81Hciil7fIUMsm6inb6RS8AYD_EpP8h_YrF4HVhFb_aQepCClQ/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbyxgUtZBHpmL9ag0oi8DWVhskfeK6zZF3NmsvhS4uLhUVVoPk5Ac5HvjOqD9Irs_WHxRA/exec';
 const SHEET_ID='1pEgdJ0eLkMiVvr0kI1_TZGHHcL0bi7J2PQY49SKK-wM';
 const ARCHIVE_DAYS=3;
 const AV_COLORS=[{cls:'av-blue'},{cls:'av-teal'},{cls:'av-purple'},{cls:'av-coral'},{cls:'av-amber'},{cls:'av-green'}];
@@ -977,12 +980,23 @@ function renderVehiculos(){
     </div>`).join('');
 }
 
+function toggleVehOtro(){
+  const sel=document.getElementById('vf-tipo').value;
+  document.getElementById('vf-otro-wrap').style.display=sel==='Otro'?'block':'none';
+  if(sel!=='Otro')document.getElementById('vf-otro').value='';
+}
+
 function openVehModal(id){
   editingVehId=id;
   const v=id?allVehiculos.find(x=>x.id===id):null;
   document.getElementById('modal-veh-title').textContent=id?'Editar vehículo':'Nuevo vehículo';
   document.getElementById('vf-placa').value=v?.placa||'';
-  document.getElementById('vf-tipo').value=v?.tipo||'Camión';
+  const tiposFijos=['Camión','Camioneta','Panel','Montacargas','Cabezal','Otro'];
+  const tipoGuardado=v?.tipo||'Camión';
+  const esOtro=tipoGuardado&&!tiposFijos.includes(tipoGuardado);
+  document.getElementById('vf-tipo').value=esOtro?'Otro':tipoGuardado;
+  document.getElementById('vf-otro').value=esOtro?tipoGuardado:'';
+  document.getElementById('vf-otro-wrap').style.display=esOtro?'block':'none';
   document.getElementById('vf-asig').value=v?.asig||'';
   document.getElementById('vf-emp').value=v?.emp||'';
   document.getElementById('modal-veh').classList.add('open');
@@ -998,7 +1012,7 @@ async function saveVehiculo(){
   const veh={
     id:editingVehId||'v'+Date.now(),
     placa,
-    tipo:document.getElementById('vf-tipo').value,
+    tipo:(document.getElementById('vf-tipo').value==='Otro'?(document.getElementById('vf-otro').value.trim()||'Otro'):document.getElementById('vf-tipo').value),
     asig:document.getElementById('vf-asig').value.trim(),
     emp:document.getElementById('vf-emp').value.trim()
   };
