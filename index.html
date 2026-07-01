@@ -2,7 +2,13 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1a3a5c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Tareas ALOPSA">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tareas — Control Logístico</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -95,13 +101,57 @@ label.lbl{font-size:12px;color:#666;margin-bottom:4px;display:block}
 .container{max-width:600px;margin:0 auto}
 @media(max-width:500px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
 
+
+.quick-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.qf{border:0.5px solid var(--border);background:var(--surface-2);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;transition:all .15s;color:var(--text-secondary)}
+.qf.active{background:#1a3a5c;color:#fff;border-color:#1a3a5c}
+body.dark .qf{background:#2a2a2a;border-color:rgba(255,255,255,0.15);color:#aaa}
+body.dark .qf.active{background:#2a5a8c;color:#e8e8e6;border-color:#2a5a8c}
+.kanban-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px}
+.kanban-col{flex:0 0 260px;background:var(--surface-1);border-radius:12px;padding:10px}
+.kanban-col-title{font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.kanban-card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;cursor:grab;font-size:12px;transition:box-shadow .15s}
+.kanban-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.kanban-card.dragging{opacity:.5;cursor:grabbing}
+.kanban-col.drag-over{outline:2px dashed #1a3a5c;outline-offset:-2px}
+.kanban-card-desc{font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kanban-card-meta{color:var(--text-secondary);font-size:11px}
+.view-toggle{display:flex;gap:4px;margin-bottom:10px}
+.vt-btn{border:0.5px solid var(--border);background:var(--surface-2);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary)}
+.vt-btn.active{background:#1a3a5c;color:#fff;border-color:#1a3a5c}
+body.dark .kanban-col{background:#1e1e1e}
+body.dark .kanban-card{background:#252525;border-color:rgba(255,255,255,0.1)}
+body.dark .vt-btn{background:#2a2a2a;border-color:rgba(255,255,255,0.15);color:#aaa}
+body.dark .vt-btn.active{background:#2a5a8c;color:#e8e8e6}
 .veh-card{background:#fff;border:0.5px solid rgba(0,0,0,0.12);border-radius:12px;padding:1rem 1.25rem;margin-bottom:10px;display:flex;align-items:center;gap:12px}
 .veh-plate{background:#1a3a5c;color:#fff;font-size:15px;font-weight:700;padding:6px 14px;border-radius:8px;letter-spacing:2px;min-width:90px;text-align:center;flex-shrink:0}
 .veh-info{flex:1;min-width:0}
 .veh-tipo{font-size:12px;color:#666;margin-bottom:2px}
 .veh-asig{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .veh-emp{font-size:11px;color:#aaa;margin-top:2px}
-body.dark .veh-card{background:#1e1e1e;border-color:rgba(255,255,255,0.1)}
+body.dark 
+.quick-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.qf{border:0.5px solid var(--border);background:var(--surface-2);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;transition:all .15s;color:var(--text-secondary)}
+.qf.active{background:#1a3a5c;color:#fff;border-color:#1a3a5c}
+body.dark .qf{background:#2a2a2a;border-color:rgba(255,255,255,0.15);color:#aaa}
+body.dark .qf.active{background:#2a5a8c;color:#e8e8e6;border-color:#2a5a8c}
+.kanban-board{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px}
+.kanban-col{flex:0 0 260px;background:var(--surface-1);border-radius:12px;padding:10px}
+.kanban-col-title{font-size:12px;font-weight:500;color:var(--text-secondary);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.kanban-card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:8px;cursor:grab;font-size:12px;transition:box-shadow .15s}
+.kanban-card:hover{box-shadow:0 2px 8px rgba(0,0,0,0.1)}
+.kanban-card.dragging{opacity:.5;cursor:grabbing}
+.kanban-col.drag-over{outline:2px dashed #1a3a5c;outline-offset:-2px}
+.kanban-card-desc{font-weight:500;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kanban-card-meta{color:var(--text-secondary);font-size:11px}
+.view-toggle{display:flex;gap:4px;margin-bottom:10px}
+.vt-btn{border:0.5px solid var(--border);background:var(--surface-2);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--text-secondary)}
+.vt-btn.active{background:#1a3a5c;color:#fff;border-color:#1a3a5c}
+body.dark .kanban-col{background:#1e1e1e}
+body.dark .kanban-card{background:#252525;border-color:rgba(255,255,255,0.1)}
+body.dark .vt-btn{background:#2a2a2a;border-color:rgba(255,255,255,0.15);color:#aaa}
+body.dark .vt-btn.active{background:#2a5a8c;color:#e8e8e6}
+.veh-card{background:#1e1e1e;border-color:rgba(255,255,255,0.1)}
 body.dark .veh-plate{background:#2a5a8c}
 body.dark .veh-tipo,.veh-emp{color:#888}
 /* ── MODO OSCURO ── */
@@ -246,6 +296,12 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
   <div style="padding:0 1.25rem 1.25rem">
     <div class="sync-bar"><span id="u-sync-icon">🔄</span> <span id="u-sync-txt">Sincronizando...</span></div>
     <div class="search-bar" style="margin-bottom:10px"><input type="text" id="u-search" placeholder="🔍 Buscar tarea..." style="margin-bottom:0" oninput="renderUser()"></div>
+    <div class="quick-filters" id="u-qf">
+      <button class="qf" onclick="setUserQF('hoy',this)">📅 Hoy</button>
+      <button class="qf" onclick="setUserQF('vencidas',this)">⚠️ Vencidas</button>
+      <button class="qf" onclick="setUserQF('alta',this)">🔴 Alta</button>
+      <button class="qf" onclick="setUserQF('',this)">✕ Limpiar</button>
+    </div>
     <div class="tabs">
       <button class="tab active" onclick="setTab('activas',this)">Activas</button>
       <button class="tab" onclick="setTab('pendiente',this)">Pendientes</button>
@@ -279,6 +335,17 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
   <div style="padding:0 1.25rem 1.25rem">
     <div class="sync-bar"><span id="sup-sync-icon">🔄</span> <span id="sup-sync-txt">Sincronizando...</span></div>
     <div class="search-bar" style="margin-bottom:10px"><input type="text" id="sup-search" placeholder="🔍 Buscar tarea..." style="margin-bottom:0" oninput="renderSup()"></div>
+    <div class="quick-filters" id="sup-qf">
+      <button class="qf" onclick="setSupQF('hoy',this)">📅 Hoy</button>
+      <button class="qf" onclick="setSupQF('vencidas',this)">⚠️ Vencidas</button>
+      <button class="qf" onclick="setSupQF('alta',this)">🔴 Alta prioridad</button>
+      <button class="qf" onclick="setSupQF('sinasignar',this)">👤 Sin asignar</button>
+      <button class="qf" onclick="setSupQF('',this)">✕ Limpiar</button>
+    </div>
+    <div class="view-toggle">
+      <button class="vt-btn active" id="vt-lista" onclick="setSupView('lista')">☰ Lista</button>
+      <button class="vt-btn" id="vt-kanban" onclick="setSupView('kanban')">⊞ Kanban</button>
+    </div>
     <div class="tabs">
       <button class="tab active" onclick="setSupTab('activas',this)">Activas</button>
       <button class="tab" onclick="setSupTab('completada',this)">Completadas</button>
@@ -291,6 +358,7 @@ body.dark .search-bar input{background:#2a2a2a;color:#e8e8e6;border-color:rgba(2
       <select id="fil-pri" onchange="renderSup()"><option value="">Todas las prioridades</option><option>alta</option><option>media</option><option>baja</option></select>
     </div>
     <div id="sup-tasks"></div>
+    <div id="sup-kanban" style="display:none"></div>
   </div>
 </div>
 
@@ -733,7 +801,8 @@ function taskCard(t,showActions=true){
 function renderUser(){
   if(!currentUser)return;
   const uq=(document.getElementById('u-search')?.value||'').toLowerCase().trim();
-  const my=allTasks.filter(t=>t.userId===currentUser.id&&(!uq||t.desc.toLowerCase().includes(uq)||(t.notas||'').toLowerCase().includes(uq)));
+  let my=allTasks.filter(t=>t.userId===currentUser.id&&(!uq||t.desc.toLowerCase().includes(uq)||(t.notas||'').toLowerCase().includes(uq)));
+  if(userQF)my=applyQF(my,userQF);
   let filtered;
   if(currentTab==='archivo') filtered=my.filter(t=>t.archived);
   else if(currentTab==='activas') filtered=my.filter(t=>!t.archived&&t.estado!=='completada');
@@ -775,7 +844,9 @@ function renderSup(){
     <div class="stat-card"><div class="stat-num" style="color:#854F0B">${proc}</div><div class="stat-lbl">En proceso</div></div>
     <div class="stat-card"><div class="stat-num" style="color:#A32D2D">${venc}</div><div class="stat-lbl">Vencidas</div></div>`;
   const sq=(document.getElementById('sup-search')?.value||'').toLowerCase().trim();
-  const filtered=pool.filter(t=>(!fb||t.bodega===fb)&&(!fe||t.estado===fe)&&(!fp||t.prioridad===fp)&&(!sq||(t.desc||'').toLowerCase().includes(sq)||(t.notas||'').toLowerCase().includes(sq)));
+  let filtered=pool.filter(t=>(!fb||t.bodega===fb)&&(!fe||t.estado===fe)&&(!fp||t.prioridad===fp)&&(!sq||(t.desc||'').toLowerCase().includes(sq)||(t.notas||'').toLowerCase().includes(sq)));
+  if(supQF)filtered=applyQF(filtered,supQF);
+  if(supView==='kanban'){renderKanban(filtered);return;}
   const grouped={};filtered.forEach(t=>{if(!grouped[t.bodega])grouped[t.bodega]=[];grouped[t.bodega].push(t)});
   const activeBodegas=fb?[fb]:bodegas;
   document.getElementById('sup-tasks').innerHTML=activeBodegas.map(b=>{
@@ -908,6 +979,89 @@ function closeTaskModal(){document.getElementById('modal-task').classList.remove
 
 
 
+
+
+// ── FILTROS RÁPIDOS ──
+let supQF='', userQF='';
+
+function setSupQF(val, btn){
+  supQF = (supQF===val&&val!=='') ? '' : val;
+  document.querySelectorAll('#sup-qf .qf').forEach(b=>b.classList.remove('active'));
+  if(supQF && btn) btn.classList.add('active');
+  renderSup();
+}
+function setUserQF(val, btn){
+  userQF = (userQF===val&&val!=='') ? '' : val;
+  document.querySelectorAll('#u-qf .qf').forEach(b=>b.classList.remove('active'));
+  if(userQF && btn) btn.classList.add('active');
+  renderUser();
+}
+function applyQF(tasks, qf){
+  const today=todayStr();
+  if(qf==='hoy') return tasks.filter(t=>t.reminder&&t.reminder.startsWith(today)||t.fecha&&t.fecha.startsWith(today));
+  if(qf==='vencidas') return tasks.filter(t=>isVencida(t));
+  if(qf==='alta') return tasks.filter(t=>t.prioridad==='alta');
+  if(qf==='sinasignar') return tasks.filter(t=>!t.userId||t.userId==='');
+  return tasks;
+}
+
+// ── VISTA KANBAN ──
+let supView='lista';
+function setSupView(v){
+  supView=v;
+  document.getElementById('vt-lista').classList.toggle('active',v==='lista');
+  document.getElementById('vt-kanban').classList.toggle('active',v==='kanban');
+  document.getElementById('sup-tasks').style.display=v==='lista'?'':'none';
+  document.getElementById('sup-kanban').style.display=v==='kanban'?'':'none';
+  renderSup();
+}
+
+function renderKanban(tasks){
+  const cols=[
+    {id:'pendiente',label:'Pendiente',color:'#185FA5'},
+    {id:'proceso',label:'En proceso',color:'#854F0B'},
+    {id:'fraccionado',label:'💰 Fraccionado',color:'#3B6D11'},
+    {id:'completada',label:'✅ Completada',color:'#0F6E56'}
+  ];
+  const kb=document.getElementById('sup-kanban');
+  kb.innerHTML='<div class="kanban-board">'+cols.map(col=>{
+    const colTasks=tasks.filter(t=>t.estado===col.id&&!t.archived);
+    return `<div class="kanban-col" data-col="${col.id}" ondragover="kbDragOver(event)" ondrop="kbDrop(event,'${col.id}')">
+      <div class="kanban-col-title">
+        <span style="color:${col.color}">${col.label}</span>
+        <span style="background:${col.color}22;color:${col.color};padding:1px 7px;border-radius:10px;font-size:11px">${colTasks.length}</span>
+      </div>
+      ${colTasks.map(t=>{
+        const u=CFG.users.find(x=>x.id===t.userId);
+        return `<div class="kanban-card" draggable="true" data-id="${t.id}"
+          ondragstart="kbDragStart(event)"
+          onclick="openTaskDetail('${t.id}')">
+          <div class="kanban-card-desc">${t.desc}</div>
+          <div class="kanban-card-meta">${u?u.name:'Sin asignar'} · ${t.bodega||''}</div>
+          ${t.fecha?`<div class="kanban-card-meta">📅 ${fmtDate(t.fecha)}</div>`:''}
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('')+'</div>';
+}
+
+let kbDragId=null;
+function kbDragStart(e){ kbDragId=e.currentTarget.dataset.id; e.currentTarget.classList.add('dragging'); }
+function kbDragOver(e){ e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+async function kbDrop(e,newEstado){
+  e.preventDefault();
+  document.querySelectorAll('.kanban-col').forEach(c=>c.classList.remove('drag-over'));
+  if(!kbDragId)return;
+  const t=allTasks.find(x=>x.id===kbDragId);
+  if(!t||t.estado===newEstado)return;
+  t.estado=newEstado;
+  if(newEstado==='completada'){ t.completedAt=new Date().toISOString(); const u=CFG.users.find(x=>x.id===t.userId); await notifySupCompletion(t,u?u.name:t.userId); }
+  else t.completedAt='';
+  await writeTask(t,'update');
+  renderSup();
+  showToast('Estado actualizado',t.desc.slice(0,40),'success',2000);
+  kbDragId=null;
+}
 
 // ── MODO OSCURO ──
 function applyDark(on){

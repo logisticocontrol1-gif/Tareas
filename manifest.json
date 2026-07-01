@@ -1,0 +1,25 @@
+{
+  "name": "Tareas ALOPSA",
+  "short_name": "Tareas",
+  "description": "Control Logístico — Sistema de Tareas ALOPSA",
+  "start_url": "/Tareas/",
+  "scope": "/Tareas/",
+  "display": "standalone",
+  "background_color": "#F5F5F3",
+  "theme_color": "#1a3a5c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/logisticocontrol1-gif/Tareas/main/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/logisticocontrol1-gif/Tareas/main/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
